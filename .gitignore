@@ -1,0 +1,13 @@
+dist/*.ipk
+node_modules/
+.DS_Store
+
+# Local credentials and machine configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+.codex/
+.agents/

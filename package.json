@@ -1,0 +1,11 @@
+{
+  "name": "webos-custom-home",
+  "version": "0.2.3",
+  "private": true,
+  "scripts": {
+    "start": "node tools/preview.js",
+    "check": "node --check app/config.js && node --check app/platform.js && node --check app/main.js && node --check tools/preview.js && node --check app/iptv.js && node --check app/channel-health.js && node --check app/order.js && node --check app/remote.js",
+    "package": "ares-package app -o dist",
+    "test": "node tests/playlist.js && node tests/channel-health.js && node tests/order.js && node tests/remote.js"
+  }
+}
