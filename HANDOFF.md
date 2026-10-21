@@ -22,7 +22,7 @@ Preview prioritizes 1080p AVC. Native preview video is outside transformed #scre
 
 Input-based Home autostart was verified by full TV reboot. app/boot.js activates only when /var/lib/webosbrew/custom-home/enabled exists. EIM's original store preserves Home as the boot input; normal input changes use a persistent bind-mounted copy. Home also invokes the existing Homebrew autostart service. See AUTOSTART.md for enable/disable and TV backup paths. LG Input Hook bindings are unchanged.
 
-Early TV CoverUI displays Home / Loading independently of application splash settings. noSplashOnLaunch and spinnerOnLaunch do not suppress this early UI on this firmware. No CoverUI or firmware files were modified.
+Early TV CoverUI displays Home / Loading independently of application splash settings. noSplashOnLaunch and spinnerOnLaunch do not suppress this early UI on this firmware. A reversible current-boot-only CoverUI mount was tested successfully on 21 October 2026; see the CoverUI trial section below. Firmware files remain unchanged.
 
 ## Persistence and constraints
 
@@ -49,3 +49,8 @@ Left/right while ambient mode is active cycle all selected favorites in catalog 
 
 ## Aerial settings tabs (0.5.5)
 Settings now has Favorites and All tabs, styled like channel playlist tabs. Favorites is the initial view; the selected tab remains while the app instance lives. Filtering reuses existing card/image nodes rather than rebuilding the catalog. Removing a favorite from Favorites closes its preview if open, updates the visible list, and moves focus to the nearest remaining card or selected tab. Left/right switches focused tabs; Down/OK enters cards; Up from the first row returns to the tab. Three-column preview navigation now correctly enters preview controls only from the third column. Browser checks verified add/remove via R (desktop red key), empty Favorites, full All catalog, and keyboard tab switching.
+
+## CoverUI trial (21 October 2026)
+User authorized hiding Home / Loading carefully. tools/tv-coverui.js patches exactly one visibility condition in StartUpUI.qml for com.custom.webos.home, with firmware-shape guards, SHA-256 verification, backup under /var/lib/webosbrew/custom-home/coverui and a temporary bind mount. Removal and reapplication were tested against real TV checksums. The mount survived remote power off/on, but surface-manager PID 1370 remained and cached QML still displayed the original text.
+User separately authorized a compositor reload. tools/tv-coverui-reload.js armed an independent 180-second rollback watchdog before restarting surface-manager (new PID 18031). User then confirmed normal TV/remote operation and no Home / Loading text. Trial was confirmed and automatic rollback cancelled; current temporary mount is active. Original hash: 1996ed04293fc108823645262ca357db5dc96fbf9d2dc3fe8a4318b0d566310e. Patched hash: 25a96ed8b65e630f8fa91c53e1234ce921a4b65c72b70d62817b4dc76d456b90.
+This is NOT persistent across full reboot/power loss. Homebrew hooks in the current input-based boot sequence run after Home has launched, too late for early CoverUI. No early boot/security changes, persistent hooks or firmware edits were made. Removing the mount restores the original file; a compositor restart/full reboot is needed to clear QML already in memory. Do not restart the whole UI again without separate user agreement. Both tools have local tests included in npm test.
