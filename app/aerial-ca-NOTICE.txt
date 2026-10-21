@@ -3,3 +3,8 @@ Source and extraction details: https://curl.se/docs/caextract.html
 License: Mozilla Public License 2.0 (see aerial-ca-LICENSE.txt).
 This public trust bundle is used only by the local Apple Aerial transport.
 It does not modify the television's system trust store.
+
+Apple Root CA public certificate obtained from Apple PKI:
+https://www.apple.com/appleca/AppleIncRootCertificate.cer
+https://www.apple.com/certificateauthority/
+The MPL notice above applies to the Mozilla bundle.

@@ -4,7 +4,7 @@ Native HTML/CSS/ES5 home screen for LG 49SJ810V, webOS 3.5 (06.10.65), Chromium 
 
 Commands: npm start; npm run check; npm test; npm run package.
 
-## Current build: 0.5.0
+## Current build: 0.5.1
 
 Includes Montserrat Light/Bold, original application artwork, input icons, favorites-only home shelves, complete application/channel/input libraries, playlist tabs and persistent reordering. P+/P- stays within the playlist/favorites scope used to open a channel. Home launch always uses favorite channels.
 
@@ -16,7 +16,7 @@ The gear opens Settings / Screensavers. The catalog contains 139 Apple Aerial as
 
 Aerial selection is stored under home.aerial.favorites.v1. Empty favorites intentionally shows only the ambient clock. Idle is 120 seconds, rotation 5 minutes, preload starts 20 seconds before idle/rotation. Clicking the clock starts ambient mode. Cursor movements, cursor status pseudo-keys and transient visible-app blur do not dismiss it. Real key presses and Back dismiss it; hidden apps release playback.
 
-Preview prioritizes 1080p AVC. Native preview video is outside transformed #screen. QuickTime ftyp brands caused browser MEDIA_ELEMENT_ERROR 4. aerial-stream.js serves catalog-only Apple streams on loopback port 9765 as compatible MP4 with byte-range support; only container brand bytes change. No transcoding, no video persistence, bounded backpressure, max four requests. Browser decoding was verified at 1920x1080 with advancing currentTime. On TV, Homebrew starts the Node/curl helper on demand; an idle helper exits after a minute. The normal preview server starts its own helper. Build 0.5.0 is installed and launched on the TV. The loopback helper starts on TV Node 0.12. Old TV CA roots rejected the Apple CDN certificate; the transport now scopes the current public Mozilla CA bundle to curl, preserving TLS verification. Final stream probing is recorded during deployment.
+Preview prioritizes 1080p AVC. Native preview video is outside transformed #screen. QuickTime ftyp brands caused browser MEDIA_ELEMENT_ERROR 4. aerial-stream.js serves catalog-only Apple streams on loopback port 9765 as compatible MP4 with byte-range support; only container brand bytes change. No transcoding, no video persistence, bounded backpressure, max four requests. Browser decoding was verified at 1920x1080 with advancing currentTime. On TV, Homebrew starts the Node/curl helper on demand; an idle helper exits after a minute. The normal preview server starts its own helper. Build 0.5.1 is installed and launched on the TV. The loopback helper starts on TV Node 0.12. Old TV CA roots rejected the Apple CDN certificate; the transport now scopes the current public Mozilla CA bundle plus the official Apple Root CA to curl, preserving TLS verification. Build 0.5.1 was installed on TV; a real Apple stream byte-range probe returned 20 bytes with the expected isom container brand. Browser playback was verified separately; TV visual playback still needs user confirmation.
 
 ## Autostart
 
