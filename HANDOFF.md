@@ -4,7 +4,7 @@ Native HTML/CSS/ES5 home screen for LG 49SJ810V, webOS 3.5 (06.10.65), Chromium 
 
 Commands: npm start; npm run check; npm test; npm run package.
 
-## Current build: 0.6.5
+## Current build: 0.6.6
 
 TV folder playlists: scan-playlists.js reads only /var/lib/webosbrew/custom-home/playlists through the existing Homebrew exec bridge. Each M3U/M3U8 creates a stable filename-based tab; startup, channel-page opening and the TV-only refresh button trigger scans, never during IPTV. playlist-store.syncFolder preserves manual documents and valid cached content on read/parse/quota errors. Complete snapshots prune deleted files; removing an imported tab hides it until its file changes. Limits: 32 files, 1 MiB each, 2 MiB total; no symlinks. tools/tv-upload-playlist.js uses the configured LG CLI SSH session, validates SHA256 and performs an atomic upload with hidden backups. Never commit private playlist contents. The user's private file was uploaded separately; build 0.6.5 installed and launched. Folder/store regression tests and full checks passed.
 
@@ -69,3 +69,5 @@ channel-images triggers TV.resolveChannelLogo only for visible favorites after o
 0.6.5: Logo matcher prefers the country from tvg-id; if no matching logo exists there, accepts exactly one matching filename across other countries. Ambiguous local or global matches still return null. Kronehit.at@SD now resolves to countries/germany/kronehit-de.png. Regression tests cover country preference, foreign fallback and ambiguity.
 
 0.6.5: Resolver persists an ID/name -> PNG index. --cached copies known cached PNGs to app runtime at startup with no network, and channel-images waits for this result before starting favorite image requests. Local cache takes priority over playlist URLs. Home long-press reordering now always exits on mouseup; channel Favorites library also allows reordering, syncing clone order to source shelf and home.order.channels. Grid geometry is invalidated after moves; vertical edge scroll supports the grid. Added local-first and actual drag/release/persistence regression tests. Existing older cached entries acquire their index on the next resolver use.
+
+0.6.6: tv-logos lacks 1HD Music Television. Bundled original SVG from https://www.1hd.ru/img/logo.svg with explicit HD/SD ID mapping; static vector paths, no external images or scripts.

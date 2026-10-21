@@ -1,5 +1,7 @@
-/* Bundled logos from tvg-logo metadata in channels.m3u. */
+/* Bundled playlist logos and verified official channel artwork. 1HD: https://www.1hd.ru/img/logo.svg */
 window.CHANNEL_LOGOS = {
+  "1HDMusicTelevision.ru@HD": "logos/1HDMusicTelevision.svg",
+  "1HDMusicTelevision.ru@SD": "logos/1HDMusicTelevision.svg",
   "PlusTV.by@SD": "logos/PlusTV.by_SD.png",
   "Belarus24.by@SD": "logos/Belarus24.by_HD.png",
   "Soyuzny.ru@SD": "logos/Soyuzny.ru_SD.png",
