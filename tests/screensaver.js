@@ -30,6 +30,7 @@ function harness() {
   nodes['screensaver-preload'].pause = function () {}; nodes['screensaver-preload'].load = function () {};
   var video = nodes['screensaver-video'];
   Object.defineProperty(video, 'src', { set: function (value) { video.setAttribute('src', value); } });
+  Object.defineProperty(video, 'currentTime', { configurable: true, get: function () { return now / 1000; } });
   video.pause = function () { video.paused = true; };
   video.load = function () { video.readyState = 0; };
   video.canPlayType = function () { return 'probably'; };
@@ -76,6 +77,8 @@ var oldReject = h.reject(); h.video.error = { code: 4 }; h.video.handlers.error(
 assert.strictEqual(h.calls(), 2, 'Error and rejected promise advance only one fallback');
 assert.strictEqual(h.video.getAttribute('src'), 'https://sylvan.apple.com/1080.mov');
 h.video.readyState = 4; h.video.handlers.playing();
+assert.ok(!h.nodes.screensaver.classList.contains('has-video'), 'Playing without timeline progress must not reveal a frozen frame');
+h.advance(2000);
 assert.ok(h.nodes.screensaver.classList.contains('has-video'));
 assert.strictEqual(h.nodes['screensaver-location'].textContent, 'Дубай');
 h.event('mousemove'); h.event('wheel'); assert.ok(h.saver.isActive(), 'Pointer movement and wheel do not dismiss saver');
@@ -96,16 +99,16 @@ h.navigator.onLine = false; h.saver.start(); var before = h.calls();
 assert.strictEqual(h.video.getAttribute('src'), null); assert.strictEqual(h.calls(), before); assert.ok(h.saver.isActive());
 h.event('keydown',27); h.event('keyup',27); h.advance(400); h.navigator.onLine = true; h.saver.start();
 var count = h.calls(); h.advance(1000);
-assert.strictEqual(h.calls() - count, 5, 'Failed streams stop after six total attempts');
+assert.strictEqual(h.calls() - count, 2, 'Each of the three variants is attempted only once in a session');
 assert.strictEqual(h.video.getAttribute('src'), null); assert.ok(h.saver.isActive(), 'Failure leaves the offline clock, not a frozen player');
 console.log('Screensaver: passed (clock/OK, no preload, muted 4K, fallback races, wake key, focus, blur, idle, offline, retry bound, cleanup)');
 
 var rotation = harness(); rotation.saver.start(); rotation.video.handlers.playing(); rotation.advance(280000);
-assert.strictEqual(rotation.nodes['screensaver-preload'].src, 'https://sylvan.apple.com/4k.mov', 'Next source is preloaded 20 seconds before rotation');
+assert.strictEqual(rotation.nodes['screensaver-preload'].src, undefined, 'TV queues the next source without starting a competing native decoder');
 rotation.advance(19999); assert.strictEqual(rotation.calls(), 1); rotation.advance(1); assert.strictEqual(rotation.calls(), 2, 'Rotation happens at five minutes');
 rotation.video.handlers.playing(); rotation.event('keydown',27); rotation.advance(300000); assert.strictEqual(rotation.nodes['screensaver-preload'].getAttribute('src'), null);
 
-var warm = harness(); warm.advance(99999); assert.strictEqual(warm.nodes['screensaver-preload'].src, undefined); warm.advance(1); assert.ok(warm.nodes['screensaver-preload'].src, 'Preload begins before automatic activation'); assert.ok(!warm.saver.isActive()); warm.event('mousemove'); assert.ok(!warm.saver.isActive());
+var warm = harness(); warm.advance(99999); assert.strictEqual(warm.nodes['screensaver-preload'].src, undefined); warm.advance(1); assert.strictEqual(warm.nodes['screensaver-preload'].src, undefined, 'TV avoids parallel preloading before activation'); assert.ok(!warm.saver.isActive()); warm.event('mousemove'); assert.ok(!warm.saver.isActive());
 
 var manual = harness(); manual.saver.start(); manual.video.handlers.playing(); manual.advance(5000);
 manual.event('keydown',1537); manual.event('keyup',1537);
@@ -117,3 +120,9 @@ assert.ok(!manual.saver.isActive(), 'Back still dismisses saver');
 
 var empty = harness(); empty.selectAerials([]); empty.saver.start(); assert.strictEqual(empty.calls(), 0, "No selected videos means clock only");
 var selected = harness(); selected.selectAerials(["test"]); selected.saver.start(); assert.strictEqual(selected.calls(), 1);
+
+var stuck = harness(); stuck.saver.start(); stuck.video.handlers.playing();
+Object.defineProperty(stuck.video, 'currentTime', { get: function () { return 1; } });
+stuck.advance(18500);
+assert.strictEqual(stuck.video.getAttribute('src'), null, 'Frozen selected asset is quarantined instead of looping');
+assert.ok(!stuck.nodes.screensaver.classList.contains('has-video'), 'Clock fallback replaces frozen frame');

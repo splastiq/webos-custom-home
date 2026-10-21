@@ -47,16 +47,20 @@ function createServer(options) {
   var server = http.createServer(function (req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Range');
+    res.setHeader('Access-Control-Expose-Headers', 'X-Home-Aerial-Debug');
+    res.setHeader('X-Home-Aerial-Debug', options.debug ? '1' : '0');
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Private-Network', 'true');
     if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end(); return; }
     var parsed = url.parse(req.url, true);
+    if (options.debug && parsed.pathname !== '/health') { console.log(JSON.stringify({event: 'request', id: parsed.query.id, format: parsed.query.format, range: req.headers.range || '', method: req.method})); }
     if (parsed.pathname === '/health') { idle(); res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('home-aerial-v1'); return; }
+    if (parsed.pathname === '/aerial-state') { if (options.debug) { console.log(JSON.stringify({event: 'video-state', time: Number(parsed.query.time), ready: Number(parsed.query.ready), width: Number(parsed.query.width), error: Number(parsed.query.error), paused: parsed.query.paused, hidden: parsed.query.hidden, duration: parsed.query.duration})); } res.writeHead(204); res.end(); return; }
     var asset = assets[parsed.query.id];
     var key = parsed.query.format === 'hevc1080' ? 'url-1080-SDR' : parsed.query.format === 'hevc4k' ? 'url-4K-SDR' : 'url-1080-H264';
     var source = asset && asset[key];
-    if (parsed.pathname !== '/aerial-video' || typeof source !== 'string' || !/^https:\/\/(sylvan\.apple\.com|a1\.phobos\.apple\.com)\/[A-Za-z0-9_./%+~-]+\.(mov|mp4)$/i.test(source)) { res.writeHead(404); res.end(); return; }
+    if ((parsed.pathname !== '/aerial-video' && parsed.pathname !== '/aerial-video.mp4') || typeof source !== 'string' || !/^https:\/\/(sylvan\.apple\.com|a1\.phobos\.apple\.com)\/[A-Za-z0-9_./%+~-]+\.(mov|mp4)$/i.test(source)) { res.writeHead(404); res.end(); return; }
     if (active >= 4) { res.writeHead(503); res.end(); return; }
     active++; clearTimeout(idleTimer);
     var job;
@@ -83,7 +87,7 @@ function createServer(options) {
       });
       res.on('drain', function () { if (job && job.stdout) { job.stdout.resume(); } });
       job.on('error', fail);
-      job.on('close', function (code) { if (closed) { return; } if (code || offset !== range.end + 1) { fail(); } else { res.end(); } });
+      job.on('close', function (code) { if (options.debug) { console.log(JSON.stringify({event: 'curl-close', code: code, offset: offset, end: range.end})); } if (closed) { return; } if (code || offset !== range.end + 1) { fail(); } else { res.end(); } });
       job.stderr.resume();
     }
     if (sizes[source]) { stream(sizes[source]); return; }
@@ -102,7 +106,7 @@ function createServer(options) {
 if (require.main === module) {
   var port = Number(process.argv[2]) || 9765;
   if (port < 1024 || port > 65535) { throw new Error('Invalid local port'); }
-  var server = createServer({ idleExit: true });
+  var server = createServer({ idleExit: true, debug: process.env.HOME_AERIAL_DEBUG === '1' });
   server.on('error', function (error) { if (error.code !== 'EADDRINUSE') { console.error(error.message); } process.exit(error.code === 'EADDRINUSE' ? 0 : 1); });
   server.listen(port, '127.0.0.1', function () { fs.writeFileSync('/tmp/custom-home-aerial-stream.pid', String(process.pid)); });
 } else { module.exports = { createServer: createServer, rangeFor: rangeFor, normalizeBrands: normalizeBrands }; }

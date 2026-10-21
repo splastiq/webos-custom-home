@@ -145,7 +145,7 @@
           }
         }
         if (!card) { focus(0); return; }
-        var columns = previewAsset ? 2 : Math.max(1, Math.floor(el('aerial-settings-grid').clientWidth / 324));
+        var columns = previewAsset ? 3 : Math.max(1, Math.floor(el('aerial-settings-grid').clientWidth / 324));
         if (previewAsset && (key === 9 || (key === 39 && focused % 2 === 1))) { el('aerial-preview-close').focus(); return; }
         if (key === 9) { if (!event.shiftKey && focused === cards.length - 1) { el('settings-close').focus(); } else { focus(focused + (event.shiftKey ? -1 : 1)); } }
         else if (key === 37 || key === 39) { focus(focused + (key === 37 ? -1 : 1)); }

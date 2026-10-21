@@ -4,7 +4,7 @@ Native HTML/CSS/ES5 home screen for LG 49SJ810V, webOS 3.5 (06.10.65), Chromium 
 
 Commands: npm start; npm run check; npm test; npm run package.
 
-## Current build: 0.5.1
+## Current build: 0.5.2
 
 Includes Montserrat Light/Bold, original application artwork, input icons, favorites-only home shelves, complete application/channel/input libraries, playlist tabs and persistent reordering. P+/P- stays within the playlist/favorites scope used to open a channel. Home launch always uses favorite channels.
 
@@ -33,3 +33,9 @@ Settings are still localStorage; uninstall/data clearing may remove them. No ext
 Configure TV access/authentication separately on another computer. Never commit passwords, keys or personal TV settings. LG CLI device alias on this computer is tv. Application ID: com.custom.webos.home.
 
 See README.md and ARCHITECTURE.md for modules, checks, limitations and use.
+
+## Aerial playback follow-up (0.5.2)
+TV preview was visually confirmed by the user after using an explicit MP4 source/load and removing visibility/clipping constraints. Native diagnostics showed AVC stuck at currentTime 0 while HEVC 1080p advanced 4.659 → 9.676 → 14.692 seconds. Preview now prefers HEVC 1080p on TV, AVC on desktop. Poster remains until actual time advances. Optional loopback diagnostics are enabled only with HOME_AERIAL_DEBUG=1; normal mode sends no state samples.
+Ambient playback no longer resets retry budgets on playing events. Failed variants are skipped for the rest of the session, exhausted assets are excluded, and 15 seconds without timeline progress triggers fallback. Rotation and watchdog timers are reset per source. TV queues the next asset but does not start a concurrent preload decoder; desktop keeps video preloading. This replaces the older simultaneous-preload description above for TV.
+
+Preview layout uses three 300px card columns (972px grid) and a 700×394 preview on the right. Remote vertical navigation uses three columns. A small CSS loading indicator overlays the poster until playback advances; failure/close clears it.

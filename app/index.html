@@ -95,8 +95,9 @@
     </section>
   </main>
   <div id="aerial-preview-surface" hidden>
-    <video id="aerial-preview-video" muted playsinline preload="auto" aria-label="Видео заставки"></video>
+    <video id="aerial-preview-video" muted playsinline preload="auto" aria-label="Видео заставки"><source type="video/mp4"></video>
     <img id="aerial-preview-cover" alt="">
+    <div id="aerial-preview-loader" role="status" aria-label="Загрузка видео"><span aria-hidden="true"></span></div>
     <button id="aerial-preview-close" type="button" aria-label="Закрыть предпросмотр">×</button>
   </div>
   <section id="tv-player" hidden aria-label="IPTV-плеер" tabindex="-1">

@@ -26,6 +26,11 @@
   var preloadTimer;
   var preloadVideo;
   var prepared = null;
+  var failedAssets = {};
+  var failedSources = {};
+  var lastProgress = 0;
+  var progressTime = -1;
+  var progressTimer;
   var rotationMs = config.rotationMs || 300000;
   function clearPreload() {
     clearTimeout(preloadTimer);
@@ -36,9 +41,9 @@
     if (navigator.onLine === false) { return; }
     if (!queue.length) { refill(); }
     prepared = queue.pop() || null;
-    if (prepared) {
+    if (prepared && !window.TV.available) {
       preloadVideo.preload = 'auto';
-      preloadVideo.src = window.HomeAerialCatalog.variants(prepared, hevc())[0];
+      preloadVideo.src = availableSources(prepared)[0];
       preloadVideo.load();
     }
   }
@@ -67,27 +72,30 @@
     clockTimer = setTimeout(clock, 60000 - now.getTime() % 60000 + 20);
   }
   function releaseVideo() {
-    token++; clearTimeout(mediaTimer); mediaTimer = null; failurePending = false; playing = false;
+    token++; clearTimeout(progressTimer); progressTimer = null; clearTimeout(rotationTimer); rotationTimer = null; clearTimeout(mediaTimer); mediaTimer = null; failurePending = false; playing = false;
     overlay.classList.remove('has-video');
     video.pause(); video.removeAttribute('src'); video.load();
   }
   function hevc() {
     return window.TV.available || !!video.canPlayType('video/mp4; codecs="hvc1.1.6.L123.B0"') || !!video.canPlayType('video/mp4; codecs="hev1.1.6.L123.B0"');
   }
+  function availableSources(item) {
+    return window.HomeAerialCatalog.variants(item, hevc()).filter(function (url) { return !failedSources[item.id + '|' + url]; });
+  }
   function refill() {
     var assets = catalog.assets();
     if (window.HomeAerialSelection) { assets = window.HomeAerialSelection.filter(assets); }
-    queue = assets.filter(function (item) { return window.HomeAerialCatalog.variants(item, hevc()).length > 0; });
+    queue = assets.filter(function (item) { return !failedAssets[item.id] && availableSources(item).length > 0; });
     for (var i = queue.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1)); var swap = queue[i]; queue[i] = queue[j]; queue[j] = swap;
     }
     if (queue.length > 1 && queue[queue.length - 1].id === previousAsset) { queue.unshift(queue.pop()); }
   }
   function nextAsset() {
-    if (!queue.length) { refill(); }
-    if (!queue.length) { return false; }
-    asset = prepared || queue.pop(); prepared = null; previousAsset = asset.id;
-    sources = window.HomeAerialCatalog.variants(asset, hevc()); sourceIndex = 0; return true;
+    if (!queue.length && !prepared) { refill(); }
+    if (!queue.length && !prepared) { return false; }
+    asset = prepared && !failedAssets[prepared.id] ? prepared : queue.pop(); prepared = null; previousAsset = asset.id;
+    sources = availableSources(asset); sourceIndex = 0; return true;
   }
   function fail(expected, reason) {
     if (!idle.isActive() || expected !== token || failurePending) { return; }
@@ -95,7 +103,15 @@
     // Defer so an error event and rejected play promise cannot advance two sources.
     mediaTimer = setTimeout(function () {
       if (!idle.isActive() || expected !== token) { return; }
-      failurePending = false; sourceIndex++; attempt();
+      failurePending = false;
+      if (asset && sources[sourceIndex]) { failedSources[asset.id + '|' + sources[sourceIndex]] = true; }
+      sourceIndex++;
+      if (sourceIndex >= sources.length && asset) {
+        failedAssets[asset.id] = true;
+        queue = queue.filter(function (item) { return !failedAssets[item.id]; });
+        sources = []; clearPreload();
+      }
+      attempt();
     }, 0);
   }
   function attempt() {
@@ -106,6 +122,7 @@
     }
     releaseVideo();
     var expected = token;
+    progressTime = -1; lastProgress = Date.now();
     attempts++; overlay.setAttribute('data-state', 'loading');
     el('screensaver-location').textContent = asset.label;
     el('screensaver-place').textContent = asset.location || '';
@@ -130,7 +147,7 @@
     returnTo = document.activeElement; previousAria = el('screen').getAttribute('aria-hidden');
     overlay.hidden = false; el('screen').setAttribute('aria-hidden', 'true'); overlay.focus();
     window.IPTV.setAmbient(true);
-    attempts = 0; sources = []; asset = null; sourceIndex = 0;
+    failedAssets = {}; failedSources = {}; attempts = 0; sources = []; asset = null; sourceIndex = 0;
     clock();
     catalog.refresh(Date.now(), navigator.onLine !== false);
     attempt();
@@ -202,7 +219,8 @@
       window.addEventListener('online', function () { if (idle.isActive()) { attempts = 0; sources = []; queue = []; attempt(); } });
       video.addEventListener('playing', function () {
         if (!idle.isActive() || !video.getAttribute('src') || failurePending) { return; }
-        clearTimeout(mediaTimer); mediaTimer = null; attempts = 0; playing = true; overlay.classList.add('has-video'); overlay.setAttribute('data-state', 'playing');
+        clearTimeout(mediaTimer); mediaTimer = null; playing = true;
+        if (!progressTimer) { progressTimer = setTimeout(checkProgress, 2000); }
         if (!rotationTimer) {
           rotationTimer = setTimeout(function () { rotationTimer = null; rotate(); }, rotationMs);
           preloadTimer = setTimeout(prepareNext, Math.max(0, rotationMs - 20000));
@@ -215,8 +233,20 @@
         }
       });
       video.addEventListener('error', function () { if (idle.isActive() && video.getAttribute('src')) { fail(token, 'media-' + (video.error ? video.error.code : 'unknown')); } });
+      function checkProgress() {
+        progressTimer = null;
+        if (!idle.isActive() || !playing) { return; }
+        var current = video.currentTime;
+        if (typeof current === 'number' && current !== progressTime) {
+          if (current > 0) { overlay.classList.add('has-video'); overlay.setAttribute('data-state', 'playing'); }
+          progressTime = current; lastProgress = Date.now();
+        } else if (Date.now() - lastProgress >= 15000) { fail(token, 'no-progress'); return; }
+        progressTimer = setTimeout(checkProgress, 2000);
+      }
       function waiting() {
-        if (idle.isActive() && playing && !mediaTimer) { var expected = token; mediaTimer = setTimeout(function () { fail(expected); }, 8000); }
+        // waiting/stalled alone can be emitted while buffered playback advances.
+        // The timeline watchdog decides whether playback has actually stopped.
+        if (idle.isActive() && playing && !progressTimer) { progressTimer = setTimeout(checkProgress, 2000); }
       }
       video.addEventListener('waiting', waiting); video.addEventListener('stalled', waiting);
       if (!document.hidden) { idle.resume(); }

@@ -23,12 +23,12 @@ vm.runInNewContext(fs.readFileSync(require.resolve('../app/aerial-preview'),'utf
 });
 var preview = window.HomeAerialPreview; preview.init(video,note);
 var asset = { preview: 'aerial-thumbs/test.jpg', sources: { hevc4k: '4k.mov', hevc1080: '1080.mov', h264: 'avc.mov' } };
-preview.play(asset); assert.strictEqual(attrs.src,'avc.mov'); assert.ok(video.muted); assert.strictEqual(video.volume,0);
+preview.play(asset); assert.strictEqual(attrs.src,'1080.mov'); assert.ok(video.muted); assert.strictEqual(video.volume,0);
 var oldReject = reject; handlers.error(); oldReject(new Error('decode'));
 var next = Object.keys(jobs).filter(function (key) { return jobs[key].ms === 0; });
 assert.strictEqual(next.length,1,'Error event and rejected promise produce a single fallback');
-var fn = jobs[next[0]].fn; delete jobs[next[0]]; fn(); assert.strictEqual(attrs.src,'1080.mov');
-video.readyState = 2; video.videoWidth = 1920; handlers.playing(); assert.strictEqual(note.hidden,true);
+var fn = jobs[next[0]].fn; delete jobs[next[0]]; fn(); assert.strictEqual(attrs.src,'avc.mov');
+video.readyState = 2; video.videoWidth = 1920; video.currentTime = 0; handlers.playing(); assert.notStrictEqual(note.hidden,true, 'Metadata alone must not dismiss the cover'); video.currentTime = 1; handlers.timeupdate(); assert.strictEqual(note.hidden,true);
 preview.close(); assert.strictEqual(attrs.src,undefined); assert.strictEqual(attrs.poster,undefined); assert.ok(video.paused);
 oldReject(new Error('late')); assert.strictEqual(calls,2,'Closed preview ignores stale promises');
 preview.play(asset); assert.strictEqual(calls,3,'A new selection can start after closing');
