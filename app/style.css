@@ -1233,3 +1233,11 @@ h1 {
 #playlist-folder-message { position: absolute; right: 95px; bottom: 65px; max-width: 1100px; color: #97a6bf; font-size: 16px; }
 #playlist-folder-message[hidden] { display: none; }
 #playlist-refresh[aria-busy="true"] { color: #6c778d; }
+
+/* Channel playback captions share Aerial's subdued white typography. */
+#player-channel-name { position: absolute; left: 5%; bottom: 112px; z-index: 2; color: rgba(255,255,255,.8); font-size: 28px; font-weight: 700; pointer-events: none; visibility: hidden; }
+#tv-player.pointer-active #player-channel-name { visibility: visible; }
+#player-close { color: rgba(255,255,255,.8); }
+#player-status { color: rgba(255,255,255,.8); }
+#playlist-tools { position: relative; padding-top: 42px; }
+.playlist-actions { position: absolute; top: 0; right: 0; }

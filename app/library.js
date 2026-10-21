@@ -208,7 +208,7 @@
             if (favorite === null) { el('library-note').textContent = 'Не удалось сохранить избранное. Проверьте свободное место.'; return; }
             selected.classList.toggle('favorite', favorite); changed(); filterChannels(); if (selected.hidden) { focus(focused); } else { selected.focus(); }
             el('library-note').hidden = false;
-            el('library-note').textContent = (favorite ? 'Добавлено в избранное' : 'Удалено из избранного') + (kind === 'apps' ? ' · Красная кнопка: избранное' : '');
+            el('library-note').textContent = '';
           }
           return;
         }

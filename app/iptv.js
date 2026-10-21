@@ -143,7 +143,7 @@
         image.className = 'channel-logo';
         image.alt = '';
         image.setAttribute('aria-hidden', 'true');
-        var localLogo = window.CHANNEL_LOGOS && window.CHANNEL_LOGOS[channel.id];
+        var localLogo = window.CHANNEL_LOGOS && (window.CHANNEL_LOGOS[channel.id] || window.CHANNEL_LOGOS[channel.id.split('@')[0]]);
         image.setAttribute('data-logo-src', localLogo || channel.logo || '');
         image.setAttribute('data-logo-id', channel.id || '');
         image.setAttribute('data-logo-name', channel.name);
@@ -211,7 +211,8 @@
     el('screen').setAttribute('aria-hidden', 'true');
     el('tv-player').setAttribute('aria-label', 'IPTV: ' + channel.name);
     el('tv-player').focus();
-    hideBack();
+    el('player-channel-name').textContent = channel.name.replace(/\s*\(\d+p\)/gi, '');
+    showBack();
     startedAt = Date.now();
     firstFrame = false;
     clearTimeout(timeout); video.pause();

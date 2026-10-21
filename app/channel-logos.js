@@ -1,5 +1,14 @@
 /* Bundled playlist logos and verified official channel artwork. 1HD: https://www.1hd.ru/img/logo.svg */
 window.CHANNEL_LOGOS = {
+  "Hit.ru": "logos/hit.png",
+  "SONGTVRussia.ru": "logos/songtv-russia.png",
+  "BRIDGEDeluxe.ru": "logos/bridge-hd.png",
+  "MuzykaPervogo.ru": "logos/muzyka-pervogo.png",
+  "Nauka.ru": "logos/nauka.png",
+  "Russia1.ru": "logos/rossia1.png",
+  "RUTV.ru": "logos/ru-tv.png",
+  "TravelPlusAdventure.ru": "logos/travel-adventure.png",
+  "TV3.ru": "logos/tv3-ru.png",
   "1HDMusicTelevision.ru@HD": "logos/1HDMusicTelevision.svg",
   "1HDMusicTelevision.ru@SD": "logos/1HDMusicTelevision.svg",
   "PlusTV.by@SD": "logos/PlusTV.by_SD.png",
