@@ -23,6 +23,11 @@
   var allowed = function () { return true; };
   function items(row) { return Array.prototype.slice.call(row.querySelectorAll('[data-order-key]')); }
   function save(row) {
+    if (row.id === 'library-grid') {
+      var list=items(row), source=list[0] && list[0]._source && list[0]._source.parentNode;
+      if (source) { list.forEach(function(item){if(item._source){source.appendChild(item._source);}}); save(source); }
+      return;
+    }
     root.HomeStorage.set('home.order.' + row.id, items(row).map(function (item) { return item.getAttribute('data-order-key'); }));
   }
   function apply(row) {
@@ -91,14 +96,18 @@
       var bounds = viewport.getBoundingClientRect();
       if (event.clientX > bounds.right - 55) { viewport.scrollLeft += 35; }
       if (event.clientX < bounds.left + 55) { viewport.scrollLeft -= 35; }
+      if (row.id === 'library-grid') {
+        if (event.clientY > bounds.bottom - 55) { viewport.scrollTop += 35; }
+        if (event.clientY < bounds.top + 55) { viewport.scrollTop -= 35; }
+      }
       var target = itemAt(document.elementFromPoint(event.clientX, event.clientY));
-      if (target && target !== held && target.parentNode === row) {
+      if (target && !target.hidden && target !== held && target.parentNode === row) {
         var list = items(row);
         row.insertBefore(held, list.indexOf(held) < list.indexOf(target) ? target.nextSibling : target);
         moved = true; changed();
       }
     }, true);
-    document.addEventListener('mouseup', function () { clearTimeout(timer); if (held && moved) { finish(false); } }, true);
+    document.addEventListener('mouseup', function () { clearTimeout(timer); if (held) { finish(false); } }, true);
     document.addEventListener('click', function (event) {
       if (swallow || held) { event.preventDefault(); event.stopImmediatePropagation(); swallow = false; }
     }, true);

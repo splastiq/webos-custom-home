@@ -139,7 +139,7 @@
   });
   window.HomeLibrary.init(activateTile, bindTiles);
   bindTiles();
-  window.HomeOrder.init(bindTiles, toast, function () { return !window.IPTV.isOpen() && !window.HomeLibrary.isOpen(); });
+  window.HomeOrder.init(function () { bindTiles(); window.HomeLibrary.orderChanged(); }, toast, function () { return !window.IPTV.isOpen() && !window.HomeSettings.isOpen() && (!window.HomeLibrary.isOpen() || window.HomeLibrary.canReorder()); });
   refreshUSB();
   setInterval(refreshUSB, 15000);
   window.IPTV.init(bindTiles, function () { if (window.HomeLibrary.isOpen()) { window.HomeLibrary.restoreFocus(); } else { select(selected, true); } });

@@ -18,3 +18,11 @@ ctx.window.TV={available:true,resolveChannelLogo:function(id,name,done){lookups+
 ctx.window.HomeChannelImages.refresh();scan();assert.strictEqual(lookups,0,'Non-favorites never trigger lookup');
 favorite=true;ctx.window.HomeChannelImages.refresh();scan();assert.strictEqual(lookups,1);scan();assert.strictEqual(images[0].getAttribute('data-logo-src'),'runtime-channel-logos/test.png');assert.ok(images[0]._logoLoading);
 console.log('Channel image fallback: favorites only and replacement retry passed');
+images=[img(true)];images[0].parentNode.parentNode={};timers=[];
+var cachedDone;
+ctx.window.TV={available:true,cachedChannelLogos:function(done){cachedDone=done;}};
+vm.runInNewContext(fs.readFileSync('app/channel-images.js','utf8'),ctx);
+scan();assert.ok(!images[0]._logoLoading,'Favorite waits for local cache check');
+var local='runtime-channel-logos/'+new Array(65).join('a')+'.png';cachedDone({'|':local});scan();
+assert.strictEqual(images[0].src,local,'Local cache is used before original URL');
+console.log('Channel image cache: local-first loading passed');

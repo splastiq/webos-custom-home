@@ -54,6 +54,12 @@
       }
       read();
     },
+    cachedChannelLogos: function (done) {
+      request('luna://org.webosbrew.hbchannel.service/exec', {command:'/usr/bin/node /media/developer/apps/usr/palm/applications/com.custom.webos.home/resolve-channel-logo.js --cached'}, function(error,response){
+        var files = {}; try { if (!error) { files = JSON.parse(response.stdoutString).files || {}; } } catch (ignored) {}
+        done(files);
+      });
+    },
     resolveChannelLogo: function (id, name, done) {
       var input = window.btoa(unescape(encodeURIComponent(JSON.stringify({id:String(id || '').slice(0,200),name:String(name || '').slice(0,200)}))));
       request('luna://org.webosbrew.hbchannel.service/exec', {

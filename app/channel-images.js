@@ -2,6 +2,13 @@
 (function () {
   'use strict';
   var active = 0, timer = null, resolving = false, replacements = Object.create(null);
+  var cacheReady = !(window.TV && window.TV.available && window.TV.cachedChannelLogos);
+  var cached = Object.create(null);
+  if (!cacheReady) { window.TV.cachedChannelLogos(function(files){cached=files;cacheReady=true;schedule();}); }
+  function favorite(image) {
+    var button=image.parentNode && image.parentNode.parentNode;
+    return button && window.HomeFavorites && window.HomeFavorites.has(button,'channels');
+  }
   function fallback(image) {
     if (resolving || !window.TV || !window.TV.available || !window.TV.resolveChannelLogo || !window.HomeFavorites) { return; }
     var button = image.parentNode && image.parentNode.parentNode;
@@ -53,6 +60,12 @@
     var images = document.querySelectorAll('img[data-logo-src]');
     for (var i = 0; i < images.length && active < 4; i++) {
       var image = images[i];
+      var key = (image.getAttribute('data-logo-id') || '') + '|' + (image.getAttribute('data-logo-name') || '');
+      if (favorite(image) && !cacheReady) { continue; }
+      if (favorite(image) && !image._logoCacheChecked && cacheReady) {
+        image._logoCacheChecked=true;
+        if (/^runtime-channel-logos\/[a-f0-9]{64}\.png$/.test(cached[key] || '')) { image.setAttribute('data-logo-src',cached[key]); }
+      }
       if (image.getAttribute('data-logo-loaded') !== 'true' && !image._logoResolved &&
           ((image._logoAttempts || 0) >= 3 || !image.getAttribute('data-logo-src')) && visible(image)) { fallback(image); }
       if (image.getAttribute('data-logo-src') && !image._logoLoading && image.getAttribute('data-logo-loaded') !== 'true' &&

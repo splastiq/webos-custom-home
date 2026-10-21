@@ -60,7 +60,9 @@
       var logo = button.querySelector('img[data-logo-src]');
       if (logo && logo.getAttribute('data-logo-loaded') !== 'true') { logo.removeAttribute('src'); }
     }
-    button.removeAttribute('data-item'); button.removeAttribute('data-order-key'); button.removeAttribute('data-bound');
+    button.removeAttribute('data-item');
+    if (kind !== 'channels') { button.removeAttribute('data-order-key'); }
+    button.removeAttribute('data-bound');
     button.classList.remove('selected'); button.classList.remove('reordering');
     button.setAttribute('data-library-item', 'true');
     button._source = source;
@@ -114,7 +116,9 @@
     if (returnTo && document.documentElement.contains(returnTo)) { returnTo.focus(); }
   }
   window.HomeLibrary = {
-    isOpen: function () { return opened; }, open: open,
+    isOpen: function () { return opened; },
+    orderChanged: invalidate,
+    canReorder: function () { return opened && kind === 'channels' && window.HomePlaylists.selectedId() === 'favorites'; }, open: open,
     catalogChanged: function () {
       if (!opened || kind !== 'channels') { return; }
       var wasInGrid = el('library-grid').contains(document.activeElement);
