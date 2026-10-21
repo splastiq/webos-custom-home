@@ -1228,3 +1228,8 @@ h1 {
 #aerial-settings-tabs { display: flex; height: 70px; padding: 0 4px 12px; }
 #aerial-settings-empty { position: absolute; top: 335px; left: 99px; color: #97a6bf; font-size: 18px; }
 #aerial-settings-empty[hidden] { display: none; }
+
+#playlist-tabs { min-width: 0; flex: 1; }
+#playlist-folder-message { position: absolute; right: 95px; bottom: 65px; max-width: 1100px; color: #97a6bf; font-size: 16px; }
+#playlist-folder-message[hidden] { display: none; }
+#playlist-refresh[aria-busy="true"] { color: #6c778d; }

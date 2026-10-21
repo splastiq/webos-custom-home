@@ -4,7 +4,9 @@ Native HTML/CSS/ES5 home screen for LG 49SJ810V, webOS 3.5 (06.10.65), Chromium 
 
 Commands: npm start; npm run check; npm test; npm run package.
 
-## Current build: 0.5.5
+## Current build: 0.6.0
+
+TV folder playlists: scan-playlists.js reads only /var/lib/webosbrew/custom-home/playlists through the existing Homebrew exec bridge. Each M3U/M3U8 creates a stable filename-based tab; startup, channel-page opening and the TV-only refresh button trigger scans, never during IPTV. playlist-store.syncFolder preserves manual documents and valid cached content on read/parse/quota errors. Complete snapshots prune deleted files; removing an imported tab hides it until its file changes. Limits: 32 files, 1 MiB each, 2 MiB total; no symlinks. tools/tv-upload-playlist.js uses the configured LG CLI SSH session, validates SHA256 and performs an atomic upload with hidden backups. Never commit private playlist contents. The user's private file was uploaded separately; build 0.6.0 installed and launched. Folder/store regression tests and full checks passed.
 
 Includes Montserrat Light/Bold, original application artwork, input icons, favorites-only home shelves, complete application/channel/input libraries, playlist tabs and persistent reordering. P+/P- stays within the playlist/favorites scope used to open a channel. Home launch always uses favorite channels.
 

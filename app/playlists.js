@@ -6,6 +6,9 @@
   var pending = null;
   var sequence = 0;
   var data;
+  var folderBusy = false;
+  var folderOpened = false;
+  var lastFolderScan = 0;
   function store() {
     if (!data) { data = window.HomePlaylistStore(window.IPTV.parse, window.HomeStorage); }
     return data;
@@ -13,6 +16,7 @@
   function el(id) { return document.getElementById(id); }
   function documents() { return store().documents(); }
   function tabs() {
+    if (selected !== 'favorites' && !documents().some(function(doc){return doc.id === selected;})) { selected = 'favorites'; }
     el('playlist-tabs').textContent = '';
     [{ id: 'favorites', name: 'Избранное' }].concat(documents()).forEach(function (item) {
       var button = document.createElement('button'); button.type = 'button';
@@ -25,6 +29,32 @@
       el('playlist-tabs').appendChild(button);
     });
     el('playlist-delete').hidden = selected === 'favorites';
+  }
+  function folderMessage(text) { el('playlist-folder-message').textContent = text; el('playlist-folder-message').hidden = !text; }
+  function refreshFolder(quiet, force) {
+    if (!window.TV.available || !window.TV.scanPlaylists || folderBusy || window.IPTV.isOpen() || !force && lastFolderScan && Date.now() - lastFolderScan < 15000) { return; }
+    folderBusy = true; lastFolderScan = Date.now();
+    el('playlist-refresh').setAttribute('aria-busy','true');
+    window.TV.scanPlaylists(function(error, report){
+      folderBusy = false; el('playlist-refresh').removeAttribute('aria-busy');
+      if (error) { if (!quiet) { folderMessage('Не удалось прочитать папку ТВ. Проверьте Homebrew Channel.'); } return; }
+      if (window.IPTV.isOpen()) { lastFolderScan = 0; return; }
+      var result = store().syncFolder(report);
+      if (result.error) { if (!quiet) { folderMessage(result.error === 'storage' ? 'Недостаточно места для сохранения плейлистов.' : 'Не удалось обновить плейлисты.'); } return; }
+      if (result.changed) {
+        var onTab = el('playlist-tabs').contains(document.activeElement);
+        if (folderOpened) { tabs(); }
+        window.IPTV.rebuild();
+        if (folderOpened) {
+          changed();
+          if (onTab) { el('playlist-tabs').querySelector('[aria-selected="true"]').focus(); }
+        }
+      }
+      if (!quiet) {
+        folderMessage(report.error === 'missing-folder' ? 'В папке ТВ пока нет плейлистов.' :
+          'Папка проверена · Файлов: ' + report.files.length + ((report.errors.length + result.skipped) ? ' · Пропущено: ' + (report.errors.length + result.skipped) : ''));
+      }
+    });
   }
   function message(text) { el('playlist-message').textContent = text; }
   function closeForm() {
@@ -56,9 +86,12 @@
       if (id === 'favorites') { return window.HomeFavorites.has(button, 'channels'); }
       return store().contains(id, button.getAttribute('data-order-key') || button._channelUrl);
     },
-    open: function (onChanged) { changed = onChanged; tabs(); },
-    close: function () { sequence++; if (pending) { pending.abort(); pending = null; } el('playlist-submit').disabled = false; el('playlist-form').hidden = true; el('playlist-delete-form').hidden = true; },
+    open: function (onChanged) { folderOpened = true; changed = onChanged; tabs(); folderMessage(''); refreshFolder(true, false); },
+    close: function () { folderOpened = false; sequence++; if (pending) { pending.abort(); pending = null; } el('playlist-submit').disabled = false; el('playlist-form').hidden = true; el('playlist-delete-form').hidden = true; },
     init: function () {
+      el('playlist-refresh').hidden = !window.TV.available;
+      el('playlist-refresh').addEventListener('click', function(){refreshFolder(false, true);});
+      if (window.TV.available) { setTimeout(function(){refreshFolder(true, true);},0); }
       el('playlist-add').addEventListener('click', function () {
         el('playlist-delete-form').hidden = true;
         el('playlist-form').hidden = false;
@@ -84,7 +117,7 @@
       el('playlist-delete').addEventListener('click', function () {
         el('playlist-form').hidden = true; el('playlist-delete-form').hidden = false;
         var doc = documents().filter(function (item) { return item.id === selected; })[0];
-        el('playlist-delete-label').textContent = 'Удалить плейлист «' + (doc ? doc.name : '') + '»?';
+        el('playlist-delete-label').textContent = doc && doc.source === 'tv-folder' ? 'Скрыть плейлист «' + doc.name + '»? Файл на ТВ сохранится.' : 'Удалить плейлист «' + (doc ? doc.name : '') + '»?';
         el('playlist-delete-cancel').focus();
       });
       el('playlist-delete-cancel').addEventListener('click', function () { el('playlist-delete-form').hidden = true; el('playlist-delete').focus(); });

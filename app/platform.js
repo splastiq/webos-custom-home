@@ -33,6 +33,18 @@
         command: '/usr/bin/node /media/developer/apps/usr/palm/applications/com.custom.webos.home/aerial-stream.js 9765 >/tmp/custom-home-aerial-stream.log 2>&1 </dev/null &'
       }, function (error) { done(error); });
     },
+    scanPlaylists: function (done) {
+      request('luna://org.webosbrew.hbchannel.service/exec', {
+        command: '/usr/bin/node /media/developer/apps/usr/palm/applications/com.custom.webos.home/scan-playlists.js'
+      }, function (error, response) {
+        if (error) { done(error); return; }
+        try {
+          var report = JSON.parse(response.stdoutString || '');
+          if (!Array.isArray(report.files) || !Array.isArray(report.errors)) { throw new Error('invalid'); }
+          done(null, report);
+        } catch (invalid) { done('Не удалось прочитать папку плейлистов'); }
+      });
+    },
     listApps: function (done) {
       request('luna://com.webos.applicationManager/listApps', {}, function (error, response) {
         if (!error && response && Array.isArray(response.apps) && response.apps.length) { done(null, response.apps); return; }

@@ -57,10 +57,12 @@
       <div id="playlist-tools" hidden>
         <div id="playlist-tabs" role="tablist" aria-label="Плейлисты"></div>
         <div class="playlist-actions">
+          <button id="playlist-refresh" class="text-action" type="button" hidden>Обновить из папки</button>
           <button id="playlist-delete" class="text-action" type="button">Удалить плейлист</button>
           <button id="playlist-add" class="text-action" type="button">Добавить плейлист</button>
         </div>
       </div>
+      <p id="playlist-folder-message" role="status" hidden></p>
       <form id="playlist-form" hidden>
         <label for="playlist-name">Название плейлиста</label>
         <input id="playlist-name" type="text" maxlength="80" placeholder="Мой плейлист">
