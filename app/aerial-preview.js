@@ -8,6 +8,9 @@
   var index = 0;
   var token = 0;
   var timer;
+  var startupLimit;
+  var buffering = false;
+  var bufferedEnd = -1;
   var nextPending = false;
   var poster = '';
   var surface;
@@ -69,7 +72,7 @@
   function frame() {
     report();
     if (!sources.length || video.readyState < 2 || !video.videoWidth || !(video.currentTime > firstTime)) { return; }
-    clearTimeout(timer); nextPending = false; status('');
+    clearTimeout(timer); clearTimeout(startupLimit); buffering = false; nextPending = false; status('');
     if (surface) { surface.classList.add('has-frame'); }
   }
   function status(text) {
@@ -80,7 +83,7 @@
     }
   }
   function stop() {
-    token++; clearTimeout(timer); nextPending = false;
+    token++; clearTimeout(timer); clearTimeout(startupLimit); buffering = false; nextPending = false;
     clearTimeout(transportTimer);
     clearTimeout(keepAliveTimer);
     if (transportRequest) { var request = transportRequest; transportRequest = null; request.abort(); }
@@ -96,14 +99,18 @@
   function attempt() {
     stop();
     if (poster) { video.setAttribute('poster', poster); }
-    if (index >= sources.length) { status('Видео недоступно или формат не поддерживается.'); return; }
+    if (index >= sources.length) { status(video.getAttribute('data-last-error') === 'timeout' ? 'Загрузка видео остановилась. Попробуйте снова.' : 'Не удалось воспроизвести видео. Попробуйте другой ролик.'); return; }
     var expected = token;
     status('Загрузка видео…');
     video.muted = true; video.volume = 0; video.loop = true;
-    firstTime = 0;
-    if (mediaSource) { mediaSource.src = sources[index]; } else { video.src = sources[index]; }
+    firstTime = 0; bufferedEnd = -1; buffering = true;
+    if (mediaSource) {
+      mediaSource.setAttribute('type', window.TV.available ? 'video/mp4;mediaOption=' + encodeURI(JSON.stringify({mediaTransportType: 'URI', option: {mediaFormat: {type: 'video_only'}}})) : 'video/mp4');
+      mediaSource.src = sources[index];
+    } else { video.src = sources[index]; }
     video.load();
-    timer = setTimeout(function () { fail(expected); }, 30000);
+    timer = setTimeout(function () { fail(expected, 'timeout'); }, 30000);
+    startupLimit = setTimeout(function () { fail(expected, 'timeout'); }, 120000);
     try {
       var promise = video.play();
       if (promise && promise.catch) { promise.catch(function (error) { fail(expected, error && (error.name + ': ' + error.message)); }); }
@@ -118,6 +125,14 @@
         if (!sources.length || nextPending || !video.paused) { return; }
         var expected = token;
         try { var start = video.play(); if (start && start.catch) { start.catch(function (error) { fail(expected, error && error.name); }); } } catch (error) { fail(expected, error.message); }
+      });
+      video.addEventListener('progress', function () {
+        if (!buffering || nextPending || !video.buffered || !video.buffered.length) { return; }
+        var end;
+        try { end = video.buffered.end(video.buffered.length - 1); } catch (ignored) { return; }
+        if (end <= bufferedEnd) { return; }
+        bufferedEnd = end; var expected = token; clearTimeout(timer);
+        timer = setTimeout(function () { fail(expected, 'timeout'); }, 30000);
       });
       video.addEventListener('playing', frame);
       video.addEventListener('loadeddata', frame); video.addEventListener('timeupdate', frame);

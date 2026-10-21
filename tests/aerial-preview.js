@@ -24,6 +24,12 @@ vm.runInNewContext(fs.readFileSync(require.resolve('../app/aerial-preview'),'utf
 var preview = window.HomeAerialPreview; preview.init(video,note);
 var asset = { preview: 'aerial-thumbs/test.jpg', sources: { hevc4k: '4k.mov', hevc1080: '1080.mov', h264: 'avc.mov' } };
 preview.play(asset); assert.strictEqual(attrs.src,'1080.mov'); assert.ok(video.muted); assert.strictEqual(video.volume,0);
+var initialStall = Object.keys(jobs).filter(function(k){return jobs[k].ms === 30000;})[0];
+video.buffered = {length: 1, end: function () { return 2; }}; handlers.progress();
+assert.ok(!jobs[initialStall], 'Received buffer progress renews the inactivity timeout');
+var pendingTimers = Object.keys(jobs).join(','); handlers.progress();
+assert.strictEqual(Object.keys(jobs).join(','), pendingTimers, 'Unchanged buffer must not extend the deadline forever');
+assert.strictEqual(Object.keys(jobs).filter(function(k){return jobs[k].ms === 120000;}).length, 1, 'Slow loading still has an absolute deadline');
 var oldReject = reject; handlers.error(); oldReject(new Error('decode'));
 var next = Object.keys(jobs).filter(function (key) { return jobs[key].ms === 0; });
 assert.strictEqual(next.length,1,'Error event and rejected promise produce a single fallback');
