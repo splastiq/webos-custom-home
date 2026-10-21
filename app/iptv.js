@@ -143,10 +143,8 @@
         image.className = 'channel-logo';
         image.alt = '';
         image.setAttribute('aria-hidden', 'true');
-        image.onerror = function () { image.style.display = 'none'; };
-        image.onload = function () { mark.className = 'channel-mark has-logo'; };
         var localLogo = window.CHANNEL_LOGOS && window.CHANNEL_LOGOS[channel.id];
-        image.src = localLogo || channel.logo;
+        image.setAttribute('data-logo-src', localLogo || channel.logo);
         mark.appendChild(image);
       }
       var name = document.createElement('span');

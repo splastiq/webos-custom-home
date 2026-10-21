@@ -55,7 +55,11 @@
     if (kind === 'apps' || kind === 'channels') {
       button.classList.toggle('favorite', window.HomeFavorites.has(source || button, kind));
     }
-    if (kind === 'channels') { button.disabled = false; }
+    if (kind === 'channels') {
+      button.disabled = false;
+      var logo = button.querySelector('img[data-logo-src]');
+      if (logo && logo.getAttribute('data-logo-loaded') !== 'true') { logo.removeAttribute('src'); }
+    }
     button.removeAttribute('data-item'); button.removeAttribute('data-order-key'); button.removeAttribute('data-bound');
     button.classList.remove('selected'); button.classList.remove('reordering');
     button.setAttribute('data-library-item', 'true');
