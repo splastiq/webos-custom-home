@@ -11,9 +11,13 @@
     var found = paths.filter(function(p){
       if (!/^countries\/[a-z0-9/-]+\.png$/.test(p) || /(?:mosaic|preview|space)/.test(p)) { return false; }
       var file=p.split('/').pop(), parts=/^(.*)-([a-z]{2})\.png$/.exec(file);
-      if (!parts || country && parts[2] !== country[1].toLowerCase()) { return false; }
+      if (!parts) { return false; }
       var key=normalize(parts[1]); return key && (key === target || byId && key === byId);
     });
+    if (country) {
+      var local = found.filter(function(p){return p.slice(-7,-4) === '-' + country[1].toLowerCase();});
+      if (local.length) { return local.length === 1 ? local[0] : null; }
+    }
     return found.length === 1 ? found[0] : null;
   }
   var api={normalize:normalize,match:match};

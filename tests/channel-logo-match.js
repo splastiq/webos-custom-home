@@ -3,6 +3,8 @@ var assert=require('assert'),m=require('../app/channel-logo-match');
 var paths=['countries/russia/ntv-ru.png','countries/germany/ntv-de.png','countries/russia/rossiya-1-ru.png'];
 assert.strictEqual(m.match(paths,'NTV.ru@HD','НТВ HD'),paths[0]);
 assert.strictEqual(m.match(paths,'','NTV'),null);
+assert.strictEqual(m.match(['countries/germany/kronehit-de.png'],'Kronehit.at@SD','Kronehit (1080p)'),'countries/germany/kronehit-de.png');
+assert.strictEqual(m.match(paths,'NTV.at','NTV'),null,'Multiple foreign matches remain ambiguous');
 assert.strictEqual(m.match(paths,'Russia1.ru','Россия 1 HD'),paths[2]);
 assert.strictEqual(m.match(['countries/../evil-ru.png'],'evil.ru','evil'),null);
 assert.strictEqual(m.match(paths,'Other.ru','Missing'),null);
