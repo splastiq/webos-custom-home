@@ -1180,7 +1180,7 @@ h1 {
 #settings h2 { margin: 0 0 24px; font-size: 38px; }
 #settings h3 { font-size: 24px; margin: 0 0 12px; font-weight: 300; }
 #aerial-selection-status { margin: 0 0 24px; font-size: 18px; color: #97a6bf; }
-#aerial-settings-body { height: 690px; overflow-y: auto; overflow-x: hidden; padding: 4px; }
+#aerial-settings-body { height: 620px; overflow-y: auto; overflow-x: hidden; padding: 4px; }
 #aerial-settings-grid { position: relative; display: flex; flex-wrap: wrap; align-content: flex-start; }
 .aerial-card { position: relative; display: block; width: 300px; height: 230px; flex-shrink: 0; margin: 0 24px 28px 0; padding: 0; color: #f7f8fc; text-align: left; background: none; border: 0; border-radius: 12px; outline: none; }
 .aerial-art { display: block; position: relative; width: 300px; height: 169px; overflow: hidden; background: #20283a; border-radius: 12px; }
@@ -1195,7 +1195,7 @@ h1 {
 
 #settings.has-aerial-preview #aerial-settings-body { width: 984px; }
 #settings.has-aerial-preview #aerial-settings-grid { width: 972px; }
-#aerial-preview-panel { position: absolute; top: 235px; right: 95px; bottom: 125px; width: 700px; display: flex; flex-direction: column; }
+#aerial-preview-panel { position: absolute; top: 305px; right: 95px; bottom: 125px; width: 700px; display: flex; flex-direction: column; }
 #aerial-preview-panel[hidden] { display: none; }
 #aerial-preview-video { display: block; width: 700px; height: 394px; flex-shrink: 0; object-fit: contain; background: #000; border-radius: 12px; }
 #aerial-preview-close { position: absolute; z-index: 2; top: 12px; right: 14px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; color: #bbc1cc; background: rgba(0,0,0,.6); font: 36px/40px Arial,sans-serif; outline: none; }
@@ -1224,3 +1224,7 @@ h1 {
 #aerial-preview-surface.is-loading #aerial-preview-loader { display: flex; }
 #aerial-preview-loader span { display: block; width: 36px; height: 36px; border: 3px solid rgba(255,255,255,.2); border-top-color: rgba(255,255,255,.8); border-radius: 50%; animation: aerial-loading .9s linear infinite; }
 @keyframes aerial-loading { to { transform: rotate(360deg); } }
+
+#aerial-settings-tabs { display: flex; height: 70px; padding: 0 4px 12px; }
+#aerial-settings-empty { position: absolute; top: 335px; left: 99px; color: #97a6bf; font-size: 18px; }
+#aerial-settings-empty[hidden] { display: none; }

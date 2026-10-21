@@ -4,6 +4,8 @@
   var opened = false;
   var returnTo;
   var cards = [];
+  var allCards = [];
+  var activeTab = 'favorites';
   var focused = 0;
   var previewTimer;
   var previewAsset = null;
@@ -11,8 +13,30 @@
   function el(id) { return document.getElementById(id); }
   function status() {
     var count = window.HomeAerialSelection.filter(window.HomeScreensaver.assets()).length;
-    el('aerial-selection-status').textContent = 'Apple Aerial · ' + cards.length + ' заставок · В избранном: ' + count +
+    el('aerial-selection-status').textContent = 'Apple Aerial · Показано: ' + cards.length + ' · В избранном: ' + count +
       (count ? '' : ' · Выберите заставки. Пока показываются только часы.');
+  }
+  function selectedTab() { return el('aerial-tab-' + activeTab); }
+  function render() {
+    cards = allCards.filter(function (card) { return activeTab === 'all' || window.HomeAerialSelection.has(card.getAttribute('data-aerial-id')); });
+    el('aerial-settings-grid').textContent = '';
+    var fragment = document.createDocumentFragment();
+    cards.forEach(function (card) { fragment.appendChild(card); });
+    el('aerial-settings-grid').appendChild(fragment);
+    el('aerial-settings-body').scrollTop = 0;
+    el('aerial-settings-empty').hidden = cards.length > 0;
+    ['favorites','all'].forEach(function (name) {
+      var tab = el('aerial-tab-' + name); var selected = activeTab === name;
+      tab.setAttribute('aria-selected', selected ? 'true' : 'false'); tab.tabIndex = selected ? 0 : -1;
+    });
+    status(); loadPreviews();
+  }
+  function selectTab(name) {
+    if (activeTab !== name) {
+      if (previewAsset) { closePreview(); }
+      activeTab = name; render();
+    }
+    selectedTab().focus();
   }
   function loadPreviews() {
     clearTimeout(previewTimer);
@@ -29,7 +53,7 @@
   }
   function focus(index) {
     focused = Math.max(0, Math.min(cards.length - 1, index));
-    if (!cards[focused]) { el('settings-close').focus(); return; }
+    if (!cards[focused]) { selectedTab().focus(); return; }
     cards[focused].focus();
     var body = el('aerial-settings-body'); var card = cards[focused];
     if (card.offsetTop < body.scrollTop) { body.scrollTop = card.offsetTop; }
@@ -41,7 +65,11 @@
     if (selected === null) { el('aerial-settings-error').textContent = 'Не удалось сохранить выбор: недостаточно места.'; return; }
     el('aerial-settings-error').textContent = '';
     card.setAttribute('data-favorite', selected ? 'true' : 'false');
-    window.HomeScreensaver.selectionChanged(); status();
+    window.HomeScreensaver.selectionChanged();
+    if (activeTab === 'favorites' && !selected) {
+      if (previewAsset && previewAsset.id === card.getAttribute('data-aerial-id')) { closePreview(); }
+      var index = focused; render(); focus(index);
+    } else { status(); }
   }
   function target(event) {
     var node = event.target;
@@ -87,13 +115,12 @@
     isOpen: function () { return opened; },
     open: function (button) {
       if (opened) { return; }
-      opened = true; returnTo = button || document.activeElement; cards = []; assets = Object.create(null);
+      opened = true; returnTo = button || document.activeElement; cards = []; allCards = []; assets = Object.create(null);
       el('settings').hidden = false; el('settings').parentNode.setAttribute('data-settings-open', 'true');
       ['hero','apps-section','channels-section','inputs-section'].forEach(function (name) {
         var node = document.querySelector('.' + name); if (node) { node.setAttribute('aria-hidden', 'true'); }
       });
       el('aerial-settings-grid').textContent = ''; el('aerial-settings-error').textContent = '';
-      var fragment = document.createDocumentFragment();
       window.HomeScreensaver.assets().forEach(function (asset) {
         assets[asset.id] = asset;
         var card = document.createElement('button'); card.type = 'button'; card.className = 'aerial-card';
@@ -102,14 +129,15 @@
         var art = document.createElement('span'); art.className = 'aerial-art'; card.appendChild(art);
         var title = document.createElement('span'); title.className = 'aerial-title'; title.textContent = asset.label; card.appendChild(title);
         var place = document.createElement('span'); place.className = 'aerial-place'; place.textContent = asset.location || ''; card.appendChild(place);
-        card._preview = asset.preview; cards.push(card); fragment.appendChild(card);
+        card._preview = asset.preview; allCards.push(card);
       });
-      el('aerial-settings-grid').appendChild(fragment); el('aerial-settings-body').scrollTop = 0; status(); focus(0);
+      render(); focus(0);
     },
     init: function () {
       window.HomeAerialPreview.init(el('aerial-preview-video'), el('aerial-preview-status'), el('aerial-preview-slot'), el('aerial-preview-surface'), el('aerial-preview-cover'));
       el('aerial-preview-close').addEventListener('click', closePreview);
       el('settings-close').addEventListener('click', close);
+      ['favorites','all'].forEach(function (name) { el('aerial-tab-' + name).addEventListener('click', function () { selectTab(name); }); });
       el('aerial-settings-grid').addEventListener('click', function (event) { var card = target(event); if (card) { showPreview(card); } });
       el('aerial-settings-grid').addEventListener('mouseover', function (event) { var card = target(event); if (card && !(event.relatedTarget && card.contains(event.relatedTarget))) { card.focus(); } });
       el('aerial-settings-grid').addEventListener('focus', function (event) { var card = target(event); if (card) { focused = cards.indexOf(card); loadPreviews(); } }, true);
@@ -120,6 +148,14 @@
         if ([27,461,37,38,39,40,13,32,403,82,9,33,34].indexOf(key) === -1) { return; }
         event.preventDefault(); event.stopImmediatePropagation();
         if (key === 27 || key === 461) { if (previewAsset) { closePreview(); } else { close(); } return; }
+        var onTab = event.target === el('aerial-tab-favorites') || event.target === el('aerial-tab-all');
+        if (onTab) {
+          if (key === 37) { selectTab('favorites'); }
+          else if (key === 39) { selectTab('all'); }
+          else if (key === 40 || key === 13 || key === 32 || key === 9 && !event.shiftKey) { focus(0); }
+          else if (key === 9 && event.shiftKey) { el('settings-close').focus(); }
+          return;
+        }
         if (key === 403 || (key === 82 && !window.TV.available)) {
           if (event.repeat) { return; }
           if (card) { toggle(card); } return;
@@ -146,10 +182,11 @@
         }
         if (!card) { focus(0); return; }
         var columns = previewAsset ? 3 : Math.max(1, Math.floor(el('aerial-settings-grid').clientWidth / 324));
-        if (previewAsset && (key === 9 || (key === 39 && focused % 2 === 1))) { el('aerial-preview-close').focus(); return; }
+        if (previewAsset && (key === 9 || (key === 39 && focused % columns === columns - 1))) { el('aerial-preview-close').focus(); return; }
         if (key === 9) { if (!event.shiftKey && focused === cards.length - 1) { el('settings-close').focus(); } else { focus(focused + (event.shiftKey ? -1 : 1)); } }
         else if (key === 37 || key === 39) { focus(focused + (key === 37 ? -1 : 1)); }
         else if (key === 34 || key === 33) { focus(focused + columns * (key === 33 ? -2 : 2)); }
+        else if (key === 38 && focused < columns) { selectedTab().focus(); }
         else if (key === 40 && focused + columns >= cards.length) { el('settings-close').focus(); }
         else { focus(focused + (key === 38 ? -columns : columns)); }
       }, true);

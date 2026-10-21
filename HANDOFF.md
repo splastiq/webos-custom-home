@@ -4,7 +4,7 @@ Native HTML/CSS/ES5 home screen for LG 49SJ810V, webOS 3.5 (06.10.65), Chromium 
 
 Commands: npm start; npm run check; npm test; npm run package.
 
-## Current build: 0.5.4
+## Current build: 0.5.5
 
 Includes Montserrat Light/Bold, original application artwork, input icons, favorites-only home shelves, complete application/channel/input libraries, playlist tabs and persistent reordering. P+/P- stays within the playlist/favorites scope used to open a channel. Home launch always uses favorite channels.
 
@@ -46,3 +46,6 @@ The user reported another timeout on Dubai after 0.5.2; the prior single success
 ## Playback recovery and ambient arrows (0.5.4)
 Los Angeles temporarily froze and then resumed on its own, consistent with rebuffering. Preview now watches actual timeline changes after startup, shows buffering after 3 seconds without progress, and tolerates short waits. After 45 seconds without playback and 30 seconds without buffer growth (absolute 120-second freeze cap), it reconnects the same format once and restores the timestamp; repeated failure advances format, never an infinite restart loop. Duplicate timeupdate events do not clear buffering. Closing cancels watchdogs and pending recovery. Unit tests use a fake clock to verify this behavior.
 Left/right while ambient mode is active cycle all selected favorites in catalog order and wrap in both directions, without dismissing the saver. Held keys are suppressed until keyup. Manual selection may retry previously failed variants, preserving bounded automatic retries. Back and other wake keys retain their normal behavior. Tests cover three favorites with an excluded fourth asset, wraparound, held keys, empty selection, and Back.
+
+## Aerial settings tabs (0.5.5)
+Settings now has Favorites and All tabs, styled like channel playlist tabs. Favorites is the initial view; the selected tab remains while the app instance lives. Filtering reuses existing card/image nodes rather than rebuilding the catalog. Removing a favorite from Favorites closes its preview if open, updates the visible list, and moves focus to the nearest remaining card or selected tab. Left/right switches focused tabs; Down/OK enters cards; Up from the first row returns to the tab. Three-column preview navigation now correctly enters preview controls only from the third column. Browser checks verified add/remove via R (desktop red key), empty Favorites, full All catalog, and keyboard tab switching.

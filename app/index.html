@@ -81,6 +81,11 @@
       <h2 id="settings-title">Настройки</h2>
       <h3>Скринсейверы</h3>
       <p id="aerial-selection-status" aria-live="polite"></p>
+      <div id="aerial-settings-tabs" role="tablist" aria-label="Заставки">
+        <button id="aerial-tab-favorites" class="playlist-tab" role="tab" aria-selected="true" aria-controls="aerial-settings-grid" type="button">Избранное</button>
+        <button id="aerial-tab-all" class="playlist-tab" role="tab" aria-selected="false" aria-controls="aerial-settings-grid" tabindex="-1" type="button">Все</button>
+      </div>
+      <p id="aerial-settings-empty" hidden>В избранном пока нет заставок.</p>
       <div id="aerial-settings-body"><div id="aerial-settings-grid"></div></div>
       <aside id="aerial-preview-panel" hidden aria-label="Предпросмотр заставки">
         <div id="aerial-preview-slot"></div>
