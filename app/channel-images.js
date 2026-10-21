@@ -1,7 +1,22 @@
 /* Bounded, viewport-only image loading; works without IntersectionObserver on webOS 3.5. */
 (function () {
   'use strict';
-  var active = 0, timer = null;
+  var active = 0, timer = null, resolving = false, replacements = Object.create(null);
+  function fallback(image) {
+    if (resolving || !window.TV || !window.TV.available || !window.TV.resolveChannelLogo || !window.HomeFavorites) { return; }
+    var button = image.parentNode && image.parentNode.parentNode;
+    if (!button || !window.HomeFavorites.has(button, 'channels')) { return; }
+    var id = image.getAttribute('data-logo-id') || '', name = image.getAttribute('data-logo-name') || '';
+    var key = id + '|' + name;
+    if (Object.prototype.hasOwnProperty.call(replacements,key)) {
+      if (replacements[key]) { image.setAttribute('data-logo-src',replacements[key]); image._logoAttempts=0; image._logoRetry=0; }
+      image._logoResolved = true; return;
+    }
+    resolving = true;
+    window.TV.resolveChannelLogo(id,name,function(file){
+      resolving = false; replacements[key] = file; schedule();
+    });
+  }
   function schedule() {
     if (timer !== null) { return; }
     timer = setTimeout(function () { timer = null; scan(); }, 100);
@@ -38,7 +53,9 @@
     var images = document.querySelectorAll('img[data-logo-src]');
     for (var i = 0; i < images.length && active < 4; i++) {
       var image = images[i];
-      if (!image._logoLoading && image.getAttribute('data-logo-loaded') !== 'true' &&
+      if (image.getAttribute('data-logo-loaded') !== 'true' && !image._logoResolved &&
+          ((image._logoAttempts || 0) >= 3 || !image.getAttribute('data-logo-src')) && visible(image)) { fallback(image); }
+      if (image.getAttribute('data-logo-src') && !image._logoLoading && image.getAttribute('data-logo-loaded') !== 'true' &&
           (image._logoAttempts || 0) < 3 && (!image._logoRetry || image._logoRetry <= Date.now()) && visible(image)) { load(image); }
     }
   }

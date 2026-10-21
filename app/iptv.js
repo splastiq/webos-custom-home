@@ -138,13 +138,15 @@
       var mark = document.createElement('span');
       mark.className = 'channel-mark';
       mark.textContent = channel.name.replace(/\s*\(.*$/, '').slice(0, 2).toUpperCase();
-      if (channel.logo) {
+      {
         var image = document.createElement('img');
         image.className = 'channel-logo';
         image.alt = '';
         image.setAttribute('aria-hidden', 'true');
         var localLogo = window.CHANNEL_LOGOS && window.CHANNEL_LOGOS[channel.id];
-        image.setAttribute('data-logo-src', localLogo || channel.logo);
+        image.setAttribute('data-logo-src', localLogo || channel.logo || '');
+        image.setAttribute('data-logo-id', channel.id || '');
+        image.setAttribute('data-logo-name', channel.name);
         mark.appendChild(image);
       }
       var name = document.createElement('span');

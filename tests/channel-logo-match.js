@@ -1,0 +1,10 @@
+'use strict';
+var assert=require('assert'),m=require('../app/channel-logo-match');
+var paths=['countries/russia/ntv-ru.png','countries/germany/ntv-de.png','countries/russia/rossiya-1-ru.png'];
+assert.strictEqual(m.match(paths,'NTV.ru@HD','НТВ HD'),paths[0]);
+assert.strictEqual(m.match(paths,'','NTV'),null);
+assert.strictEqual(m.match(paths,'Russia1.ru','Россия 1 HD'),paths[2]);
+assert.strictEqual(m.match(['countries/../evil-ru.png'],'evil.ru','evil'),null);
+assert.strictEqual(m.match(paths,'Other.ru','Missing'),null);
+assert.strictEqual(m.match(['countries/russia/ntv-ru.png','countries/russia/sub/ntv-ru.png'],'NTV.ru','NTV'),null);
+console.log('Independent logos: country, feed ID, transliteration, ambiguous names and unsafe paths passed');

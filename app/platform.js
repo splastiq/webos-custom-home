@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   var bridges = [];
-  function request(uri, params, done) {
+  function request(uri, params, done, timeout) {
     if (!window.TV.available) { done('Системные функции доступны на телевизоре'); return; }
     var bridge = new window.PalmServiceBridge();
     var timer;
@@ -21,7 +21,7 @@
         finish(response.returnValue === false ? (response.errorText || 'Ошибка системного сервиса') : null, response);
       } catch (error) { finish('Некорректный ответ телевизора'); }
     };
-    timer = setTimeout(function () { finish('Телевизор не ответил'); }, 8000);
+    timer = setTimeout(function () { finish('Телевизор не ответил'); }, timeout || 8000);
     try { bridge.call(uri, JSON.stringify(params)); }
     catch (error) { finish('Системный сервис недоступен'); }
   }
@@ -53,6 +53,16 @@
         });
       }
       read();
+    },
+    resolveChannelLogo: function (id, name, done) {
+      var input = window.btoa(unescape(encodeURIComponent(JSON.stringify({id:String(id || '').slice(0,200),name:String(name || '').slice(0,200)}))));
+      request('luna://org.webosbrew.hbchannel.service/exec', {
+        command: '/usr/bin/node /media/developer/apps/usr/palm/applications/com.custom.webos.home/resolve-channel-logo.js ' + input
+      }, function (error, response) {
+        var file = null;
+        try { file = JSON.parse(response.stdoutString).file; } catch (ignored) {}
+        done(!error && /^runtime-channel-logos\/[a-f0-9]{64}\.png$/.test(file || '') ? file : null);
+      }, 55000);
     },
     listApps: function (done) {
       request('luna://com.webos.applicationManager/listApps', {}, function (error, response) {
