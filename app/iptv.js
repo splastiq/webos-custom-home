@@ -1,47 +1,15 @@
 (function (root) {
   'use strict';
-  function parse(text) {
-    var lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
-    var result = [];
-    var pending = null;
-    var seen = {};
-    lines.forEach(function (line) {
-      line = line.replace(/^\s+|\s+$/g, '');
-      if (line.indexOf('#EXTINF:') === 0) {
-        var comma = -1;
-        var quoted = false;
-        for (var j = 0; j < line.length; j++) {
-          if (line.charAt(j) === '"') { quoted = !quoted; }
-          if (line.charAt(j) === ',' && !quoted) { comma = j; break; }
-        }
-        var group = /group-title="([^"]*)"/.exec(line);
-        var logo = /tvg-logo="([^"]*)"/.exec(line);
-        var id = /tvg-id="([^"]*)"/.exec(line);
-        pending = comma >= 0 ? { name: line.slice(comma + 1), group: group ? group[1] : '', id: id ? id[1] : '', logo: logo && /^https?:\/\//i.test(logo[1]) ? logo[1] : '' } : null;
-        if (pending) {
-          var resolution = /\((\d{3,4})p\)/i.exec(pending.name);
-          pending.height = resolution ? Number(resolution[1]) : 0;
-        }
-      } else if (line && line.charAt(0) !== '#') {
-        if (pending && /^https?:\/\//i.test(line) && !seen[line]) {
-          pending.url = line;
-          result.push(pending);
-          seen[line] = true;
-        }
-        pending = null;
-      }
-    });
-    return result;
-  }
-  function hdChannels(channels) {
-    return channels.filter(function (channel) { return channel.height >= 720; });
-  }
-  parse.hdChannels = hdChannels;
+  var parse = typeof module !== 'undefined' && module.exports ? require('./playlist-parser') : root.HomeM3U;
   if (typeof module !== 'undefined' && module.exports) { module.exports = parse; return; }
   var source = 'https://iptv-org.github.io/iptv/languages/bel.m3u';
   var channels = [];
+  var channelButtons = [];
+  var healthRenderPending = false;
   var active = 0;
   var opened = false;
+  var playbackScope = 'favorites';
+  var ambient = false;
   var request;
   var timeout;
   var onRender;
@@ -64,7 +32,7 @@
     var channel = channels[index];
     if (!channel) { return; }
     channel.health = result;
-    var button = el('channels').querySelector('[data-channel="' + index + '"]');
+    var button = channelButtons[index];
     if (!button) { return; }
     var wasDisabled = button.disabled;
     button.disabled = result.state === 'unavailable' || (result.state === 'checking' && wasDisabled);
@@ -72,17 +40,21 @@
     button.setAttribute('aria-disabled', button.disabled ? 'true' : 'false');
     button.setAttribute('data-health', result.state);
     button.title = channel.name + ' · ' + result.reason;
-    button.querySelector('.channel-detail').textContent = result.state === 'unavailable' ? result.reason : result.state === 'unknown' ? 'Не удалось проверить' : '';
-    if (wasDisabled !== button.disabled) { onRender(); }
+    button._detail.textContent = result.state === 'unavailable' ? result.reason : result.state === 'unknown' ? 'Не удалось проверить' : '';
+    if (wasDisabled !== button.disabled && !healthRenderPending) {
+      healthRenderPending = true;
+      window.requestAnimationFrame(function () { healthRenderPending = false; onRender(); });
+    }
+    if (window.HomeLibrary) { window.HomeLibrary.refresh(button); }
   }
   function checkChannels() {
     stopChecks();
-    if (opened || document.hidden) { return; }
+    if (opened || ambient || document.hidden) { return; }
     var version = renderVersion;
     channels.forEach(function (channel, index) { setHealth(index, { state: 'checking', reason: 'Ожидает проверки…' }); });
     healthCheck = window.ChannelHealth.create();
     healthCheck.run(channels, function (index, result) {
-      if (version === renderVersion && !opened) { setHealth(index, result); }
+      if (version === renderVersion && !opened && !ambient) { setHealth(index, result); }
     });
   }
   function scheduleChecks() {
@@ -107,7 +79,7 @@
   }
   function prepare(index) {
     var channel = channels[index];
-    if (opened || !channel || channel.blocked || !/\.m3u8(?:\?|$)/i.test(channel.url)) { return; }
+    if (opened || ambient || !channel || channel.blocked || !/\.m3u8(?:\?|$)/i.test(channel.url)) { return; }
     var cached = prepared[channel.url];
     if (cached && Date.now() - cached.at < 45000) { return; }
     if (warmRequest && warmRequest.channelUrl === channel.url) { return; }
@@ -142,18 +114,26 @@
   }
   function readCache() { try { return localStorage.getItem('home.iptv.bel.v1'); } catch (e) { return null; } }
   function render(text, label) {
-    var parsed = hdChannels(parse(text));
+    window.HomePlaylists.setDefault(text);
+    var parsed = window.HomePlaylists.channels();
     if (opened) { return false; }
+    if (warmRequest) { warmRequest.abort(); warmRequest = null; }
     stopChecks();
     renderVersion++;
-    channels = parsed;
+    // Playback health is session state, not part of the cached playlist model.
+    channels = parsed.map(function (channel) {
+      return { name: channel.name, group: channel.group, id: channel.id, logo: channel.logo, height: channel.height, url: channel.url };
+    });
     el('channels').textContent = '';
+    channelButtons = [];
+    var fragment = document.createDocumentFragment();
     channels.forEach(function (channel, index) {
       var button = document.createElement('button');
       button.className = 'tile channel-tile';
       button.setAttribute('data-item', 'channel-' + index);
       button.setAttribute('data-channel', index);
       button.setAttribute('data-order-key', channel.url);
+      button.setAttribute('data-default-favorite', window.HomePlaylists.isDefault(channel.url) && channel.height >= 720 ? 'true' : 'false');
       button.setAttribute('aria-label', 'Смотреть ' + channel.name);
       var mark = document.createElement('span');
       mark.className = 'channel-mark';
@@ -176,11 +156,13 @@
       detail.className = 'channel-detail';
       detail.textContent = '';
       button.appendChild(mark); button.appendChild(name); button.appendChild(detail);
-      el('channels').appendChild(button);
+      button._detail = detail; channelButtons.push(button); fragment.appendChild(button);
     });
+    el('channels').appendChild(fragment);
     window.HomeOrder.apply(el('channels'));
-    el('channels-status').textContent = channels.length + ' каналов HD · ' + label;
+    el('channels-status').textContent = channels.length + ' каналов · ' + label;
     onRender();
+    if (window.HomeLibrary) { window.HomeLibrary.catalogChanged(); }
     scheduleChecks();
     return true;
   }
@@ -200,7 +182,7 @@
       if (text && parse(text).length) {
         try { localStorage.setItem('home.iptv.bel.v1', text); } catch (e) { /* Cache optional. */ }
         render(text, 'iptv-org');
-      } else { el('channels-status').textContent = channels.length + ' каналов HD · сохранённый список'; }
+      } else { el('channels-status').textContent = channels.length + ' каналов · сохранённый список'; }
     });
   }
   function close() {
@@ -213,7 +195,8 @@
     onClose();
     scheduleChecks();
   }
-  function play(index) {
+  function play(index, scope) {
+    if (typeof scope === 'string') { playbackScope = scope; }
     if (!channels.length) { return; }
     active = (index + channels.length) % channels.length;
     var channel = channels[active];
@@ -246,6 +229,13 @@
     if (promise && promise.catch) { promise.catch(function () { if (opened && token === generation) { status('Не удалось запустить эфир. OK — повторить, Back — выйти.', true); } }); }
   }
   root.IPTV = {
+    setAmbient: function (value) {
+      ambient = value;
+      if (value) { stopChecks(); if (warmRequest) { warmRequest.abort(); warmRequest = null; } }
+      else if (!document.hidden) { scheduleChecks(); }
+    },
+    parse: parse,
+    rebuild: function () { render(window.HomePlaylists.defaultText(), 'плейлисты'); },
     isOpen: function () { return opened; },
     play: play,
     prepare: prepare,
@@ -300,7 +290,8 @@
         if (event.repeat && Date.now() - lastChannelKey < 300) { return; }
         lastChannelKey = Date.now();
         var buttons = el('channels').querySelectorAll('[data-channel]');
-        var order = Array.prototype.map.call(buttons, function (button) { return Number(button.getAttribute('data-channel')); });
+        var order = Array.prototype.filter.call(buttons, function (button) { return window.HomePlaylists.matches(button, playbackScope); })
+          .map(function (button) { return Number(button.getAttribute('data-channel')); });
         var next = window.HomeRemote.nextAvailable(order, active, direction, function (index) { return channels[index].blocked; });
         if (next !== null && next !== active) { play(next); }
       }, true);

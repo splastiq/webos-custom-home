@@ -13,5 +13,6 @@ window.HOME_CONFIG = {
     { name: 'Mobile Device', id: 'com.webos.app.hdmi2', port: 'HDMI 2', icon: 'input-icons/apple.svg' }
   ],
   weatherUrl: 'https://api.open-meteo.com/v1/forecast?latitude=53.9&longitude=27.5667&current=temperature_2m,weather_code&timezone=Europe%2FMinsk',
+  screensaver: { enabled: true, idleMs: 120000, loadTimeoutMs: 12000, rotationMs: 300000 },
   weatherInterval: 1800000
 };

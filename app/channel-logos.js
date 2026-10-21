@@ -1,5 +1,9 @@
 /* Bundled logos from tvg-logo metadata in channels.m3u. */
 window.CHANNEL_LOGOS = {
+  "PlusTV.by@SD": "logos/PlusTV.by_SD.png",
+  "Belarus24.by@SD": "logos/Belarus24.by_HD.png",
+  "Soyuzny.ru@SD": "logos/Soyuzny.ru_SD.png",
+  "SvetloeTV.by@SD": "logos/SvetloeTV.by_SD.png",
   "RadioMir.by@SD": "logos/RadioMir.by_SD.jpg",
   "Belarus1.by@SD": "logos/Belarus1.by_SD.png",
   "Belarus1.by@HD": "logos/Belarus1.by_HD.png",

@@ -1,0 +1,5 @@
+Mozilla CA certificate bundle, obtained from https://curl.se/ca/cacert.pem
+Source and extraction details: https://curl.se/docs/caextract.html
+License: Mozilla Public License 2.0 (see aerial-ca-LICENSE.txt).
+This public trust bundle is used only by the local Apple Aerial transport.
+It does not modify the television's system trust store.

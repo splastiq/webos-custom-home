@@ -9,7 +9,7 @@
   }
   function nextAvailable(order, current, step, blocked) {
     var position = order.indexOf(current);
-    if (position < 0) { position = 0; }
+    if (position < 0) { position = step > 0 ? -1 : 0; }
     for (var offset = 1; offset <= order.length; offset++) {
       var index = order[(position + step * offset + order.length) % order.length];
       if (!blocked(index)) { return index; }

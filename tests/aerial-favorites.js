@@ -1,0 +1,18 @@
+'use strict';
+var assert = require('assert');
+var create = require('../app/aerial-favorites');
+var saved = [];
+var fail = false;
+var storage = { get: function () { return saved; }, set: function (key, value) { if (fail) { return false; } saved = value; return true; } };
+var favorites = create(storage);
+var assets = [{ id: 'one' }, { id: 'two' }];
+assert.deepStrictEqual(favorites.filter(assets), [], 'An empty selection must not play all videos');
+assert.strictEqual(favorites.toggle('two'), true);
+assert.deepStrictEqual(favorites.filter(assets), [assets[1]]);
+assert.ok(create(storage).has('two'), 'Selection survives reload');
+fail = true; assert.strictEqual(favorites.toggle('two'), null); assert.ok(favorites.has('two'), 'Failed persistence does not alter selection');
+fail = false; assert.strictEqual(favorites.toggle('two'), false); assert.deepStrictEqual(favorites.filter(assets), []);
+saved = ['one', 'one', 5, null, 'removed'];
+favorites = create(storage); assert.deepStrictEqual(favorites.filter(assets), [assets[0]], 'Deduplicate IDs and ignore absent assets');
+saved = { corrupt: true }; assert.deepStrictEqual(create(storage).filter(assets), []);
+console.log('Aerial favorites: passed (explicit selection, empty list, restart, quota failure, duplicates, missing and corrupt IDs)');

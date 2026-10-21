@@ -3,6 +3,9 @@ var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var root = path.resolve(__dirname, '../app');
+var aerialServer = require('../app/aerial-stream').createServer();
+aerialServer.on('error', function (error) { if (error.code !== 'EADDRINUSE') { console.error(error.message); } });
+aerialServer.listen(9765, '127.0.0.1');
 http.createServer(function (req, res) {
   var name;
   try { name = decodeURIComponent(req.url.split('?')[0]); } catch (e) { res.writeHead(400); res.end(); return; }

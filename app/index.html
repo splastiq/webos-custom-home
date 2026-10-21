@@ -1,3 +1,141 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Home</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="app-colors.css"></head>
-<body><main id="screen"><header><div class="status"><span id="network">Проверка сети</span><span class="divider"></span><span id="date"></span></div></header><section class="hero"><div class="greeting"><h1 id="greeting">Добрый вечер</h1></div><div class="widgets"><div class="clock-widget"><div id="clock">00:00</div><div class="widget-label">Минск · UTC+3</div></div><div class="weather-widget"><div class="weather-top"><span id="weather-icon">☁</span><span id="temperature">—°</span></div><div id="weather-description">Погода в Минске</div><div id="weather-note" class="widget-label">Загрузка прогноза</div></div></div></section><section class="apps-section"><div id="apps-viewport"><div class="tile-row" id="apps"></div></div></section><section class="channels-section"><div class="section-heading"><h2>Телеканалы</h2><span id="channels-status">Загрузка плейлиста</span></div><div id="channels-viewport"><div class="tile-row" id="channels"></div></div></section><section class="inputs-section"><div class="section-heading"><h2>Источники</h2><span>Ваши устройства</span></div><div class="tile-row" id="inputs"></div></section><footer><span><span class="key">↔</span> Выбор <span class="key">OK</span> Открыть</span><span id="mode">Локальный экран</span></footer><div id="toast" role="status" aria-live="polite"></div></main><section id="tv-player" hidden aria-label="IPTV-плеер" tabindex="-1"><video id="tv-video" preload="auto" playsinline></video><button id="player-close" aria-label="Назад к каналам" tabindex="-1">← Назад</button><p id="player-status" role="status" aria-live="polite" hidden></p></section><script src="config.js"></script><script src="platform.js"></script><script src="channel-logos.js"></script><script src="channel-health.js"></script><script src="order.js"></script><script src="remote.js"></script><script src="iptv.js"></script><script src="main.js"></script></body></html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Home</title>
+  <style>html,body{margin:0;background:#000}</style>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app-colors.css">
+</head>
+<body>
+  <main id="screen">
+    <header>
+      <div class="status">
+        <span id="network">Проверка сети</span><span class="divider"></span><span id="date"></span>
+      </div>
+    </header>
+    <section class="hero">
+      <div class="greeting">
+        <h1 id="greeting">Добрый вечер</h1>
+        <div class="weather-widget" hidden>
+          <div class="weather-top"><span id="weather-icon"></span><span id="temperature"></span></div>
+          <div id="weather-description"></div>
+          <div id="weather-note" class="widget-label"></div>
+        </div>
+      </div>
+      <div class="widgets">
+        <div class="clock-widget" id="clock-widget"><button id="clock" type="button" data-item="screensaver" aria-label="Запустить заставку" title="Запустить заставку">00:00</button><div class="widget-label">Минск · UTC+3</div><button id="settings-open" type="button" data-item="settings" aria-label="Настройки"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M9.5 3h5l.7 2.4 2.1 1.2 2.4-.6 2.5 4.3-1.7 1.8v2.4l1.7 1.8-2.5 4.3-2.4-.6-2.1 1.2-.7 2.4h-5l-.7-2.4-2.1-1.2-2.4.6-2.5-4.3 1.7-1.8v-2.4l-1.7-1.8 2.5-4.3 2.4.6 2.1-1.2z" transform="translate(0 -1.5) scale(1 .92)"/><circle cx="12" cy="11" r="3.3"/></svg></button></div>
+      </div>
+    </section>
+    <section class="apps-section">
+      <div id="apps-heading" class="section-heading shelf-links">
+        <button class="all-link" data-item="all-apps" data-library="apps">Все приложения →</button>
+      </div>
+      <div id="apps-viewport"><div class="tile-row" id="apps"></div></div>
+    </section>
+    <section class="channels-section">
+      <div class="section-heading">
+        <div id="channels-heading" class="heading-actions">
+          <button class="all-link" data-item="all-channels" data-library="channels">Все каналы →</button>
+        </div>
+      </div>
+      <div id="channels-viewport"><div class="tile-row" id="channels"></div></div>
+    </section>
+    <section class="inputs-section">
+      <div class="section-heading shelf-links" id="inputs-heading">
+        <button class="all-link" data-item="all-inputs" data-library="inputs">Все источники →</button>
+      </div>
+      <div class="tile-row" id="inputs"></div>
+    </section>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <section id="library" hidden aria-labelledby="library-title" role="region">
+      <div class="library-header">
+        <div><h2 id="library-title"></h2><p id="library-note"></p><p id="channels-status" hidden>Загрузка плейлиста</p></div>
+        <button id="library-close">← Назад</button>
+      </div>
+      <div id="playlist-tools" hidden>
+        <div id="playlist-tabs" role="tablist" aria-label="Плейлисты"></div>
+        <div class="playlist-actions">
+          <button id="playlist-delete" class="text-action" type="button">Удалить плейлист</button>
+          <button id="playlist-add" class="text-action" type="button">Добавить плейлист</button>
+        </div>
+      </div>
+      <form id="playlist-form" hidden>
+        <label for="playlist-name">Название плейлиста</label>
+        <input id="playlist-name" type="text" maxlength="80" placeholder="Мой плейлист">
+        <label for="playlist-input">Ссылка или содержимое M3U</label>
+        <textarea id="playlist-input" rows="5" placeholder="https://example.com/playlist.m3u или #EXTM3U"></textarea>
+        <p id="playlist-message" role="status"></p>
+        <button class="text-action" id="playlist-submit" type="submit">Добавить</button>
+        <button class="text-action" id="playlist-cancel" type="button">Отмена</button>
+      </form>
+      <div id="playlist-delete-form" hidden>
+        <p id="playlist-delete-label"></p>
+        <button id="playlist-delete-confirm" class="text-action" type="button">Удалить</button>
+        <button id="playlist-delete-cancel" class="text-action" type="button">Отмена</button>
+      </div>
+      <div id="library-body"><div id="library-grid"></div></div>
+    </section>
+    <section id="settings" hidden aria-labelledby="settings-title">
+      <h2 id="settings-title">Настройки</h2>
+      <h3>Скринсейверы</h3>
+      <p id="aerial-selection-status" aria-live="polite"></p>
+      <div id="aerial-settings-body"><div id="aerial-settings-grid"></div></div>
+      <aside id="aerial-preview-panel" hidden aria-label="Предпросмотр заставки">
+        <div id="aerial-preview-slot"></div>
+        <p id="aerial-preview-status" role="status"></p>
+        <div id="aerial-preview-info" tabindex="0" role="region" aria-label="Информация о заставке">
+          <h3 id="aerial-preview-title"></h3>
+          <dl id="aerial-preview-metadata"></dl>
+        </div>
+      </aside>
+      <p id="aerial-settings-error" role="status"></p>
+      <button id="settings-close" class="text-action" type="button">← Назад</button>
+    </section>
+  </main>
+  <div id="aerial-preview-surface" hidden>
+    <video id="aerial-preview-video" muted playsinline preload="auto" aria-label="Видео заставки"></video>
+    <img id="aerial-preview-cover" alt="">
+    <button id="aerial-preview-close" type="button" aria-label="Закрыть предпросмотр">×</button>
+  </div>
+  <section id="tv-player" hidden aria-label="IPTV-плеер" tabindex="-1">
+    <video id="tv-video" preload="auto" playsinline></video>
+    <button id="player-close" aria-label="Назад к каналам" tabindex="-1">← Назад</button>
+    <p id="player-status" role="status" aria-live="polite" hidden></p>
+  </section>
+  <section id="screensaver" hidden tabindex="-1" aria-label="Заставка Aerial">
+    <video id="screensaver-video" muted playsinline preload="none" aria-hidden="true"></video>
+    <video id="screensaver-preload" muted playsinline preload="none" aria-hidden="true" hidden></video>
+    <div id="screensaver-location"></div>
+    <div id="screensaver-place" hidden></div>
+    <div id="screensaver-time"><div id="screensaver-clock"></div><div id="screensaver-date"></div></div>
+  </section>
+  <!-- ES5 scripts load in dependency order; no runtime module loader or framework. -->
+  <script src="storage.js"></script>
+  <script src="config.js"></script>
+  <script src="platform.js"></script>
+  <script src="boot.js"></script>
+  <script src="channel-logos.js"></script>
+  <script src="channel-health.js"></script>
+  <script src="order.js"></script>
+  <script src="remote.js"></script>
+  <script src="playlist-parser.js"></script>
+  <script src="iptv.js"></script>
+  <script src="favorites.js"></script>
+  <script src="playlist-store.js"></script>
+  <script src="playlists.js"></script>
+  <script src="library.js"></script>
+  <script src="tiles.js"></script>
+  <script src="apps.js"></script>
+  <script src="widgets.js"></script>
+  <script src="aerial-assets.js"></script>
+  <script src="aerial-catalog.js"></script>
+  <script src="aerial-favorites.js"></script>
+  <script src="idle.js"></script>
+  <script src="screensaver.js"></script>
+  <script src="aerial-preview.js"></script>
+  <script src="settings.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

@@ -1,11 +1,11 @@
 {
   "name": "webos-custom-home",
-  "version": "0.2.3",
+  "version": "0.5.0",
   "private": true,
   "scripts": {
     "start": "node tools/preview.js",
-    "check": "node --check app/config.js && node --check app/platform.js && node --check app/main.js && node --check tools/preview.js && node --check app/iptv.js && node --check app/channel-health.js && node --check app/order.js && node --check app/remote.js",
+    "check": "node tools/check.js",
     "package": "ares-package app -o dist",
-    "test": "node tests/playlist.js && node tests/channel-health.js && node tests/order.js && node tests/remote.js"
+    "test": "node tests/playlist.js && node tests/channel-health.js && node tests/order.js && node tests/remote.js && node tests/settings.js && node tests/apps.js && node tests/idle.js && node tests/aerial-catalog.js && node tests/screensaver.js && node tests/es5.js && node tests/scan-apps.js && node tests/aerial-favorites.js && node tests/aerial-preview.js && node tests/aerial-stream.js"
   }
 }

@@ -12,4 +12,7 @@ assert.strictEqual(remote.nextAvailable(order, 2, -1, function () { return false
 assert.strictEqual(remote.nextAvailable(order, 1, 1, function () { return false; }), 2);
 assert.strictEqual(remote.nextAvailable(order, 1, 1, function () { return true; }), null);
 assert.strictEqual(remote.nextAvailable([], 0, 1, function () { return false; }), null);
+assert.strictEqual(remote.nextAvailable([2, 5], 0, 1, function () { return false; }), 2, 'Outside current scope: start with first eligible channel');
+assert.strictEqual(remote.nextAvailable([2, 5], 0, -1, function () { return false; }), 5);
+assert.strictEqual(remote.nextAvailable([2, 5], 5, 1, function () { return false; }), 2, 'Wrap inside selected scope');
 console.log('Remote: passed (P+/P− aliases, saved order, wraparound, unavailable channels, red key)');

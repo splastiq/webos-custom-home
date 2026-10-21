@@ -3,8 +3,11 @@
   'use strict';
   function ordered(keys, saved) {
     var result = [];
+    var available = Object.create(null);
+    var seen = Object.create(null);
+    keys.forEach(function (key) { available[key] = true; });
     (Array.isArray(saved) ? saved : []).concat(keys).forEach(function (key) {
-      if (keys.indexOf(key) !== -1 && result.indexOf(key) === -1) { result.push(key); }
+      if (available[key] && !seen[key]) { seen[key] = true; result.push(key); }
     });
     return result;
   }
@@ -20,17 +23,19 @@
   var allowed = function () { return true; };
   function items(row) { return Array.prototype.slice.call(row.querySelectorAll('[data-order-key]')); }
   function save(row) {
-    try { localStorage.setItem('home.order.' + row.id, JSON.stringify(items(row).map(function (item) { return item.getAttribute('data-order-key'); }))); } catch (e) { /* Optional persistence. */ }
+    root.HomeStorage.set('home.order.' + row.id, items(row).map(function (item) { return item.getAttribute('data-order-key'); }));
   }
   function apply(row) {
     if (!row) { return; }
     var list = items(row);
-    var saved;
-    try { saved = JSON.parse(localStorage.getItem('home.order.' + row.id)); } catch (e) { saved = []; }
-    ordered(list.map(function (item) { return item.getAttribute('data-order-key'); }), saved).forEach(function (key) {
-      list.forEach(function (item) { if (item.getAttribute('data-order-key') === key) { row.appendChild(item); } });
-    });
+    var saved = root.HomeStorage.get('home.order.' + row.id, []);
+    var byKey = Object.create(null);
+    var fragment = document.createDocumentFragment();
+    list.forEach(function (item) { byKey[item.getAttribute('data-order-key')] = item; });
+    ordered(Object.keys(byKey), saved).forEach(function (key) { fragment.appendChild(byKey[key]); });
+    row.appendChild(fragment);
   }
+
   function itemAt(node) {
     while (node && node !== document) {
       if (node.getAttribute && node.hasAttribute('data-order-key')) { return node; }
@@ -61,7 +66,7 @@
   }
   function shift(item, direction) {
     var row = item.parentNode;
-    var list = items(row);
+    var list = items(row).filter(function (button) { return !button.hidden; });
     var index = list.indexOf(item);
     var target = list[index + direction];
     if (!target) { return; }

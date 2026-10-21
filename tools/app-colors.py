@@ -56,6 +56,6 @@ for file in (root / 'app/app-icons').glob('*.png'):
     colors[file.stem] = color
 if (root / 'app/app-icons/youtube.svg').exists():
     colors['youtube'] = '#ffffff'
-css = '\n'.join('.app-tile[data-order-key="%s"] .tile-art{background:%s}' % pair for pair in sorted(colors.items()))
+css = '\n'.join('.app-tile[data-app-key="%s"] .tile-art{background:%s}' % pair for pair in sorted(colors.items()))
 (root / 'app/app-colors.css').write_text('/* Generated from original icon border colors. */\n'+css+'\n')
 print(colors)
