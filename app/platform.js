@@ -34,16 +34,25 @@
       }, function (error) { done(error); });
     },
     scanPlaylists: function (done) {
-      request('luna://org.webosbrew.hbchannel.service/exec', {
-        command: '/usr/bin/node /media/developer/apps/usr/palm/applications/com.custom.webos.home/scan-playlists.js'
-      }, function (error, response) {
-        if (error) { done(error); return; }
-        try {
-          var report = JSON.parse(response.stdoutString || '');
-          if (!Array.isArray(report.files) || !Array.isArray(report.errors)) { throw new Error('invalid'); }
-          done(null, report);
-        } catch (invalid) { done('Не удалось прочитать папку плейлистов'); }
-      });
+      var text = '', digest = '', total = 0, count = 0;
+      function read() {
+        request('luna://org.webosbrew.hbchannel.service/exec', {
+          command: '/usr/bin/node /media/developer/apps/usr/palm/applications/com.custom.webos.home/scan-playlists.js --chunk ' + text.length
+        }, function (error, response) {
+          if (error) { done(error); return; }
+          try {
+            var part = JSON.parse(response.stdoutString || '');
+            if (typeof part.chunk !== 'string' || !part.chunk.length || part.chunk.length > 8192 || part.next !== text.length + part.chunk.length || part.total > 16 * 1024 * 1024 || ++count > 2048) { throw new Error('invalid'); }
+            if (digest && (digest !== part.digest || total !== part.total)) { throw new Error('changed'); }
+            digest = part.digest; total = part.total; text += part.chunk;
+            if (text.length < total) { read(); return; }
+            var report = JSON.parse(text);
+            if (text.length !== total || !Array.isArray(report.files) || !Array.isArray(report.errors)) { throw new Error('invalid'); }
+            done(null, report);
+          } catch (invalid) { done('Не удалось прочитать папку плейлистов'); }
+        });
+      }
+      read();
     },
     listApps: function (done) {
       request('luna://com.webos.applicationManager/listApps', {}, function (error, response) {

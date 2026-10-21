@@ -32,5 +32,13 @@ function scan(folder) {
   });
   return result;
 }
-if (require.main === module) { console.log(JSON.stringify(scan(directory))); }
+if (require.main === module) {
+  var serialized = JSON.stringify(scan(directory));
+  if (process.argv[2] === '--chunk') {
+    var offset = Number(process.argv[3]) || 0;
+    if (offset < 0 || offset % 1) { throw new Error('invalid-offset'); }
+    var chunk = serialized.slice(offset, offset + 8192);
+    console.log(JSON.stringify({chunk:chunk, next:offset + chunk.length, total:serialized.length, digest:crypto.createHash('sha256').update(serialized,'utf8').digest('hex')}));
+  } else { console.log(serialized); }
+}
 else { module.exports = scan; }

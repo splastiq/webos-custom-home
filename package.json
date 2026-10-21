@@ -1,11 +1,11 @@
 {
   "name": "webos-custom-home",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "scripts": {
     "start": "node tools/preview.js",
     "check": "node tools/check.js",
     "package": "ares-package app -o dist",
-    "test": "node tests/playlist.js && node tests/channel-health.js && node tests/order.js && node tests/remote.js && node tests/settings.js && node tests/apps.js && node tests/idle.js && node tests/aerial-catalog.js && node tests/screensaver.js && node tests/es5.js && node tests/scan-apps.js && node tests/aerial-favorites.js && node tests/aerial-preview.js && node tests/aerial-stream.js && node tests/coverui.js && node tests/coverui-reload.js && node tests/playlist-folder.js"
+    "test": "node tests/playlist.js && node tests/channel-health.js && node tests/order.js && node tests/remote.js && node tests/settings.js && node tests/apps.js && node tests/idle.js && node tests/aerial-catalog.js && node tests/screensaver.js && node tests/es5.js && node tests/scan-apps.js && node tests/aerial-favorites.js && node tests/aerial-preview.js && node tests/aerial-stream.js && node tests/coverui.js && node tests/coverui-reload.js && node tests/playlist-folder.js && node tests/playlist-transport.js"
   }
 }
