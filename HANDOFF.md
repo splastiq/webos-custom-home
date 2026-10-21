@@ -4,7 +4,7 @@ Native HTML/CSS/ES5 home screen for LG 49SJ810V, webOS 3.5 (06.10.65), Chromium 
 
 Commands: npm start; npm run check; npm test; npm run package.
 
-## Current build: 0.5.3
+## Current build: 0.5.4
 
 Includes Montserrat Light/Bold, original application artwork, input icons, favorites-only home shelves, complete application/channel/input libraries, playlist tabs and persistent reordering. P+/P- stays within the playlist/favorites scope used to open a channel. Home launch always uses favorite channels.
 
@@ -42,3 +42,7 @@ Preview layout uses three 300px card columns (972px grid) and a 700×394 preview
 
 ## Preview buffering follow-up (0.5.3)
 The user reported another timeout on Dubai after 0.5.2; the prior single successful preview did not establish reliability across assets. TV curl probes of Dubai HEVC returned HTTP 206 but took 19.48 s for 1 MiB in one run and 4.869 s in another (first byte 0.497 s). Preview now renews its 30-second inactivity deadline only when the buffered end advances, with a separate absolute 120-second cap. It no longer labels every exhausted retry as an unsupported format. The TV source explicitly requests the documented URI/video_only mediaOption for these silent clips. Tests include progress renewal and the absolute deadline; the user confirmed Dubai video starts on TV with this build.
+
+## Playback recovery and ambient arrows (0.5.4)
+Los Angeles temporarily froze and then resumed on its own, consistent with rebuffering. Preview now watches actual timeline changes after startup, shows buffering after 3 seconds without progress, and tolerates short waits. After 45 seconds without playback and 30 seconds without buffer growth (absolute 120-second freeze cap), it reconnects the same format once and restores the timestamp; repeated failure advances format, never an infinite restart loop. Duplicate timeupdate events do not clear buffering. Closing cancels watchdogs and pending recovery. Unit tests use a fake clock to verify this behavior.
+Left/right while ambient mode is active cycle all selected favorites in catalog order and wrap in both directions, without dismissing the saver. Held keys are suppressed until keyup. Manual selection may retry previously failed variants, preserving bounded automatic retries. Back and other wake keys retain their normal behavior. Tests cover three favorites with an excluded fourth asset, wraparound, held keys, empty selection, and Back.

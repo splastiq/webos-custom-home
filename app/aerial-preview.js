@@ -11,6 +11,13 @@
   var startupLimit;
   var buffering = false;
   var bufferedEnd = -1;
+  var watchTimer;
+  var started = false;
+  var lastProgressAt = 0;
+  var lastBufferAt = 0;
+  var resumeTime = 0;
+  var pendingSeek = false;
+  var recoveries = [];
   var nextPending = false;
   var poster = '';
   var surface;
@@ -71,19 +78,37 @@
   }
   function frame() {
     report();
-    if (!sources.length || video.readyState < 2 || !video.videoWidth || !(video.currentTime > firstTime)) { return; }
+    if (!sources.length || nextPending || pendingSeek || video.readyState < 2 || !video.videoWidth || !isFinite(video.currentTime) || Math.abs(video.currentTime - firstTime) < .02) { return; }
+    firstTime = video.currentTime; lastProgressAt = Date.now();
+    if (!started) { started = true; var expected = token; watchTimer = setTimeout(function () { watch(expected); }, 2000); }
     clearTimeout(timer); clearTimeout(startupLimit); buffering = false; nextPending = false; status('');
     if (surface) { surface.classList.add('has-frame'); }
+  }
+  function watch(expected) {
+    watchTimer = null;
+    if (expected !== token || !sources.length || !started || nextPending) { return; }
+    frame();
+    var now = Date.now();
+    var stoppedFor = now - lastProgressAt;
+    if (stoppedFor >= 120000 || stoppedFor >= 45000 && now - lastBufferAt >= 30000) { fail(expected, 'playback-stalled'); return; }
+    if (stoppedFor >= 3000) { status('Буферизация…'); }
+    watchTimer = setTimeout(function () { watch(expected); }, 2000);
+  }
+  function restorePosition() {
+    if (!pendingSeek || !sources.length || nextPending) { return; }
+    var target = resumeTime;
+    if (isFinite(video.duration) && video.duration > 0) { target = Math.min(target, Math.max(0, video.duration - .25)); }
+    try { video.currentTime = target; firstTime = target; pendingSeek = false; } catch (ignored) {}
   }
   function status(text) {
     note.textContent = text; note.hidden = !text;
     if (surface) {
-      if (text === 'Загрузка видео…') { surface.classList.add('is-loading'); }
+      if (text === 'Загрузка видео…' || text === 'Буферизация…') { surface.classList.add('is-loading'); }
       else { surface.classList.remove('is-loading'); }
     }
   }
   function stop() {
-    token++; clearTimeout(timer); clearTimeout(startupLimit); buffering = false; nextPending = false;
+    token++; clearTimeout(watchTimer); watchTimer = null; started = false; clearTimeout(timer); clearTimeout(startupLimit); buffering = false; nextPending = false;
     clearTimeout(transportTimer);
     clearTimeout(keepAliveTimer);
     if (transportRequest) { var request = transportRequest; transportRequest = null; request.abort(); }
@@ -93,8 +118,14 @@
   function fail(expected, reason) {
     if (!sources.length || expected !== token || nextPending) { return; }
     video.setAttribute('data-last-error', reason || 'timeout');
-    nextPending = true; clearTimeout(timer);
-    timer = setTimeout(function () { if (expected !== token || !sources.length) { return; } index++; attempt(); }, 0);
+    var wasPlaying = started;
+    if (wasPlaying) { resumeTime = video.currentTime; }
+    nextPending = true; clearTimeout(timer); clearTimeout(watchTimer); watchTimer = null;
+    timer = setTimeout(function () {
+      if (expected !== token || !sources.length) { return; }
+      if (wasPlaying && !recoveries[index]) { recoveries[index] = 1; } else { index++; }
+      attempt();
+    }, 0);
   }
   function attempt() {
     stop();
@@ -103,7 +134,7 @@
     var expected = token;
     status('Загрузка видео…');
     video.muted = true; video.volume = 0; video.loop = true;
-    firstTime = 0; bufferedEnd = -1; buffering = true;
+    firstTime = resumeTime; pendingSeek = resumeTime > 0; bufferedEnd = -1; buffering = true; lastBufferAt = Date.now();
     if (mediaSource) {
       mediaSource.setAttribute('type', window.TV.available ? 'video/mp4;mediaOption=' + encodeURI(JSON.stringify({mediaTransportType: 'URI', option: {mediaFormat: {type: 'video_only'}}})) : 'video/mp4');
       mediaSource.src = sources[index];
@@ -121,17 +152,21 @@
     init: function (element, message, previewSlot, previewSurface, previewCover) {
       video = element; mediaSource = video.querySelector ? video.querySelector('source') : null; video.setAttribute('autoplay', ''); note = message; slot = previewSlot; surface = previewSurface; cover = previewCover;
       video.setAttribute('data-support-avc', video.canPlayType('video/mp4; codecs="avc1.640028"'));
+      video.addEventListener('loadedmetadata', restorePosition);
       video.addEventListener('canplay', function () {
+        restorePosition();
         if (!sources.length || nextPending || !video.paused) { return; }
         var expected = token;
         try { var start = video.play(); if (start && start.catch) { start.catch(function (error) { fail(expected, error && error.name); }); } } catch (error) { fail(expected, error.message); }
       });
       video.addEventListener('progress', function () {
-        if (!buffering || nextPending || !video.buffered || !video.buffered.length) { return; }
+        if (nextPending || !sources.length || !video.buffered || !video.buffered.length) { return; }
         var end;
         try { end = video.buffered.end(video.buffered.length - 1); } catch (ignored) { return; }
         if (end <= bufferedEnd) { return; }
-        bufferedEnd = end; var expected = token; clearTimeout(timer);
+        bufferedEnd = end; lastBufferAt = Date.now();
+        if (!buffering) { return; }
+        var expected = token; clearTimeout(timer);
         timer = setTimeout(function () { fail(expected, 'timeout'); }, 30000);
       });
       video.addEventListener('playing', frame);
@@ -147,7 +182,7 @@
       sources = (window.TV.available ? [asset.sources.hevc1080, asset.sources.h264] : [asset.sources.h264, hevc ? asset.sources.hevc1080 : ''])
         .filter(function (url, position, all) { return !!url && all.indexOf(url) === position; });
       if (!sources.length && hevc && asset.sources.hevc4k) { sources = [asset.sources.hevc4k]; }
-      index = 0; poster = asset.preview || '';
+      index = 0; resumeTime = 0; recoveries = []; poster = asset.preview || '';
       if (surface) { surface.hidden = false; cover.src = poster; position(); }
       stop(); status('Загрузка видео…');
       var expected = token;

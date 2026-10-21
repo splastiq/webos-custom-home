@@ -6,6 +6,7 @@ var attrs = {};
 var handlers = {};
 var jobs = {};
 var seq = 0;
+var now = 0;
 var calls = 0;
 var reject;
 var video = {
@@ -18,8 +19,8 @@ Object.defineProperty(video,'src',{ set: function (url) { attrs.src = url; } });
 var window = { addEventListener: function () {}, TV: { available: true }, HomeAerialCatalog: require('../app/aerial-catalog') };
 var note = {};
 vm.runInNewContext(fs.readFileSync(require.resolve('../app/aerial-preview'),'utf8'), {
-  window: window, document: { addEventListener: function () {} },
-  setTimeout: function (fn, ms) { jobs[++seq] = { fn: fn, ms: ms }; return seq; }, clearTimeout: function (id) { delete jobs[id]; }
+  Date: {now: function () { return now; }}, window: window, document: { addEventListener: function () {} },
+  setTimeout: function (fn, ms) { jobs[++seq] = { fn: fn, ms: ms, at: now + ms }; return seq; }, clearTimeout: function (id) { delete jobs[id]; }
 });
 var preview = window.HomeAerialPreview; preview.init(video,note);
 var asset = { preview: 'aerial-thumbs/test.jpg', sources: { hevc4k: '4k.mov', hevc1080: '1080.mov', h264: 'avc.mov' } };
@@ -40,3 +41,26 @@ oldReject(new Error('late')); assert.strictEqual(calls,2,'Closed preview ignores
 preview.play(asset); assert.strictEqual(calls,3,'A new selection can start after closing');
 preview.close(); assert.deepStrictEqual(Object.keys(jobs),[],'No timer survives closing');
 console.log('Aerial preview: passed (native video, mute, source fallback, race suppression, release, reopen, timer cleanup)');
+
+function advance(ms) {
+  var until = now + ms;
+  for (;;) {
+    var key = Object.keys(jobs).sort(function (a,b) { return jobs[a].at-jobs[b].at; })[0];
+    if (!key || jobs[key].at > until) { break; }
+    now = jobs[key].at; var callback = jobs[key].fn; delete jobs[key]; callback();
+  }
+  now = until;
+}
+preview.play(asset); video.currentTime = 1; handlers.timeupdate();
+var playingCalls = calls;
+advance(4000); assert.strictEqual(note.textContent, 'Буферизация…', 'Frozen playback displays buffering');
+handlers.timeupdate(); assert.strictEqual(note.textContent, 'Буферизация…', 'Duplicate timestamps do not pretend playback resumed');
+advance(20000); assert.strictEqual(calls, playingCalls, 'Short buffering does not interrupt the source');
+video.currentTime = 2; handlers.timeupdate(); assert.strictEqual(note.hidden, true, 'Playback progress clears buffering');
+advance(46000); assert.strictEqual(calls, playingCalls + 1, 'Long stall reconnects once');
+assert.strictEqual(attrs.src, '1080.mov', 'First recovery keeps the current format');
+handlers.loadedmetadata(); assert.strictEqual(video.currentTime, 2, 'Recovery restores playback position');
+video.currentTime = 3; handlers.timeupdate(); advance(46000);
+assert.strictEqual(attrs.src, 'avc.mov', 'Repeated stall falls back instead of reconnecting forever');
+preview.close(); assert.deepStrictEqual(Object.keys(jobs), [], 'Closing cancels playback watchdog and recovery');
+console.log('Preview buffering: passed (indicator, duplicate timestamps, short stall, resume position, bounded recovery, cleanup)');

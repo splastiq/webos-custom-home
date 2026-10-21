@@ -162,6 +162,20 @@
     if (!document.hidden && foreground && returnTo && document.documentElement.contains(returnTo) && !returnTo.disabled) { returnTo.focus(); }
     returnTo = null;
   }
+  function step(direction) {
+    var favorites = catalog.assets();
+    if (window.HomeAerialSelection) { favorites = window.HomeAerialSelection.filter(favorites); }
+    favorites = favorites.filter(function (item) { return window.HomeAerialCatalog.variants(item, hevc()).length > 0; });
+    if (!favorites.length) { return; }
+    var current = -1;
+    favorites.forEach(function (item, index) { if (asset && item.id === asset.id) { current = index; } });
+    var next = current < 0 ? (direction > 0 ? 0 : favorites.length - 1) : (current + direction + favorites.length) % favorites.length;
+    clearPreload(); queue = []; asset = favorites[next]; previousAsset = asset.id;
+    delete failedAssets[asset.id];
+    window.HomeAerialCatalog.variants(asset, hevc()).forEach(function (url) { delete failedSources[asset.id + '|' + url]; });
+    sources = availableSources(asset); sourceIndex = 0; attempts = 0;
+    attempt();
+  }
   function input(event) {
     // Magic Remote reports cursor visibility as synthetic key events. In particular,
     // cursor_hide (1537) arrives a few seconds after the last pointer movement.
@@ -171,6 +185,9 @@
     if (event.type === 'keyup' && blockedKey !== null && event.keyCode === blockedKey) { blockedKey = null; consume(event); return; }
     if (!active && Date.now() < swallowUntil && event.type !== 'mousemove') { consume(event); return; }
     if (active) {
+      if (event.type === 'keydown' && (event.keyCode === 37 || event.keyCode === 39)) {
+        blockedKey = event.keyCode; consume(event); step(event.keyCode === 37 ? -1 : 1); return;
+      }
       if (event.type === 'mousemove' || event.type === 'wheel' || event.type === 'keyup' || event.type === 'mouseup') { consume(event); return; }
       if (event.type === 'keydown' && !event.keyCode) { return; }
       if (event.type !== 'keydown' && Date.now() < swallowUntil) { consume(event); return; }

@@ -4,7 +4,7 @@ var fs = require('fs');
 var vm = require('vm');
 var createIdle = require('../app/idle');
 var aerial = require('../app/aerial-catalog');
-function harness() {
+function harness(customAssets) {
   var now = 1780000000000;
   var jobs = {};
   var sequence = 0;
@@ -46,6 +46,7 @@ function harness() {
     setTimeout: function (fn, delay) { jobs[++sequence] = { fn: fn, at: now + delay }; return sequence; }, clearTimeout: function (id) { delete jobs[id]; },
     addEventListener: function (name, fn) { events[name] = fn; }
   };
+  if (customAssets) { window.HOME_AERIAL_ASSETS.assets = customAssets; }
   function FakeDate() { return new Date(now); } FakeDate.now = function () { return now; };
   var navigator = { onLine: true };
   vm.runInNewContext(fs.readFileSync(require.resolve('../app/screensaver'), 'utf8'), { window: window, document: document, navigator: navigator, Date: FakeDate, setTimeout: window.setTimeout, clearTimeout: window.clearTimeout });
@@ -126,3 +127,23 @@ Object.defineProperty(stuck.video, 'currentTime', { get: function () { return 1;
 stuck.advance(18500);
 assert.strictEqual(stuck.video.getAttribute('src'), null, 'Frozen selected asset is quarantined instead of looping');
 assert.ok(!stuck.nodes.screensaver.classList.contains('has-video'), 'Clock fallback replaces frozen frame');
+
+var arrows = harness(['a','b','c','d'].map(function(id){return {id:id, accessibilityLabel:id, 'url-1080-H264':'https://sylvan.apple.com/'+id+'.mov'};}));
+arrows.selectAerials(['a','c','d']); arrows.saver.start();
+var original = arrows.video.getAttribute('src');
+var favoriteUrls = ['a','c','d'].map(function(id){return 'https://sylvan.apple.com/'+id+'.mov';});
+var originalIndex = favoriteUrls.indexOf(original);
+var switched = favoriteUrls[(originalIndex + 1) % 3];
+var right = arrows.event('keydown',39); assert.ok(right.prevented && arrows.saver.isActive());
+assert.strictEqual(arrows.video.getAttribute('src'), switched, 'Right switches within favorites only');
+var afterRight = arrows.calls(); arrows.event('keydown',39); assert.strictEqual(arrows.calls(),afterRight,'Held key does not flood decoder restarts');
+arrows.event('keyup',39); arrows.event('keydown',39); arrows.event('keyup',39);
+assert.strictEqual(arrows.video.getAttribute('src'),favoriteUrls[(originalIndex + 2) % 3],'Right advances to the third favorite');
+arrows.event('keydown',39); arrows.event('keyup',39);
+assert.strictEqual(arrows.video.getAttribute('src'),original,'Right wraps around favorites');
+arrows.event('keydown',37); arrows.event('keyup',37);
+assert.strictEqual(arrows.video.getAttribute('src'),favoriteUrls[(originalIndex + 2) % 3],'Left wraps in the opposite direction');
+arrows.event('keydown',461); assert.ok(!arrows.saver.isActive(),'Back still exits ambient mode');
+var noFavorites = harness(); noFavorites.selectAerials([]); noFavorites.saver.start(); noFavorites.event('keydown',39);
+assert.ok(noFavorites.saver.isActive()); assert.strictEqual(noFavorites.calls(),0,'Arrows with empty favorites leave clock mode active');
+console.log('Screensaver arrows: passed (favorites only, both directions, wrap, held key, Back, empty selection)');
