@@ -17,6 +17,7 @@
   var generation = 0;
   function el(id) { return document.getElementById(id); }
   var pointerTimer;
+  var previewMode=false;
   var warmRequest;
   var prepared = {};
   var startedAt = 0;
@@ -180,12 +181,14 @@
     request = fetchList(source, function (text) {
       request = null;
       if (text && parse(text).length) {
-        try { localStorage.setItem('home.iptv.bel.v1', text); } catch (e) { /* Cache optional. */ }
+        try { localStorage.setItem('home.iptv.bel.v1', text); if(window.HomeUserData){window.HomeUserData.changed();} } catch (e) { /* Cache optional. */ }
         render(text, 'iptv-org');
       } else { el('channels-status').textContent = channels.length + ' каналов · сохранённый список'; }
     });
   }
   function close() {
+    previewMode=false; el('tv-player').classList.remove('channel-preview');el('tv-player').removeAttribute('style');
+    el('channel-preview-panel').hidden=true;el('library').classList.remove('channel-preview-open');
     opened = false; generation++; clearTimeout(timeout); hideBack();
     status('');
     var video = el('tv-video');
@@ -195,7 +198,8 @@
     onClose();
     scheduleChecks();
   }
-  function play(index, scope) {
+  function play(index, scope, preview) {
+    previewMode=!!preview;
     if (typeof scope === 'string') { playbackScope = scope; }
     if (!channels.length) { return; }
     active = (index + channels.length) % channels.length;
@@ -208,15 +212,15 @@
     var token = generation;
     opened = true;
     el('tv-player').hidden = false;
-    el('screen').setAttribute('aria-hidden', 'true');
+    if (!previewMode) { el('screen').setAttribute('aria-hidden', 'true'); }
     el('tv-player').setAttribute('aria-label', 'IPTV: ' + channel.name);
-    el('tv-player').focus();
+    if (!previewMode) { el('tv-player').focus(); }
     el('player-channel-name').textContent = channel.name.replace(/\s*\(\d+p\)/gi, '');
-    showBack();
+    if (previewMode) { previewLayout(); } else { el('tv-player').classList.remove('channel-preview');el('tv-player').removeAttribute('style');showBack(); }
     startedAt = Date.now();
     firstFrame = false;
     clearTimeout(timeout); video.pause();
-    status('Подключение к эфиру…');
+    status('Подключение к эфиру…',previewMode);
     var ready = prepared[channel.url];
     video.src = ready && Date.now() - ready.at < 45000 ? ready.url : channel.url;
     /* Setting src then play starts resource selection; load() would reset it. */
@@ -229,7 +233,28 @@
     var promise = video.play();
     if (promise && promise.catch) { promise.catch(function () { if (opened && token === generation) { status('Не удалось запустить эфир. OK — повторить, Back — выйти.', true); } }); }
   }
+  function previewLayout() {
+    if (!previewMode) { return; }
+    var box=el('channel-preview-slot').getBoundingClientRect(),surface=el('tv-player');
+    surface.classList.add('channel-preview');
+    surface.style.left=box.left+'px';surface.style.top=box.top+'px';surface.style.width=box.width+'px';surface.style.height=box.height+'px';
+  }
+  function expand() {
+    if(!previewMode){return;}previewMode=false;
+    el('tv-player').classList.remove('channel-preview');el('tv-player').removeAttribute('style');el('screen').setAttribute('aria-hidden','true');el('tv-player').focus();showBack();
+  }
   root.IPTV = {
+    isPreview: function(){return previewMode;},
+    closePreview: function(){if(previewMode){close();}},
+    preview: function(index,scope){
+      var channel=channels[index];if(!channel||channel.blocked){return;}
+      el('library').classList.add('channel-preview-open');el('channel-preview-panel').hidden=false;
+      el('channel-preview-title').textContent=channel.name;
+      el('channel-preview-info').textContent=[channel.group,channel.height?channel.height+'p':'',channel.id].filter(function(v){return !!v;}).join(' · ');
+      play(index,scope,true);
+    },
+    expandPreview: expand,
+
     setAmbient: function (value) {
       ambient = value;
       if (value) { stopChecks(); if (warmRequest) { warmRequest.abort(); warmRequest = null; } }
@@ -255,6 +280,10 @@
         channels.forEach(function (channel, index) { setHealth(index, { state: 'unknown', reason: 'Нет сети для проверки' }); });
       });
       el('player-close').addEventListener('click', close);
+      el('tv-player').addEventListener('click',function(){if(previewMode){expand();}});
+      el('channel-preview-expand').addEventListener('click',expand);
+      el('channel-preview-close').addEventListener('click',function(){if(previewMode){close();}});
+      window.addEventListener('resize',previewLayout);
       el('tv-player').addEventListener('mousemove', showBack);
       el('tv-player').addEventListener('mouseleave', hideBack);
       el('player-close').addEventListener('mouseenter', function () { clearTimeout(pointerTimer); });
@@ -294,7 +323,7 @@
         var order = Array.prototype.filter.call(buttons, function (button) { return window.HomePlaylists.matches(button, playbackScope); })
           .map(function (button) { return Number(button.getAttribute('data-channel')); });
         var next = window.HomeRemote.nextAvailable(order, active, direction, function (index) { return channels[index].blocked; });
-        if (next !== null && next !== active) { play(next); }
+        if (next !== null && next !== active) { if(previewMode){root.IPTV.preview(next,playbackScope);}else{play(next);} }
       }, true);
       document.addEventListener('keydown', function (event) {
         if (!opened) { return; }

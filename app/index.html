@@ -9,10 +9,10 @@
   <link rel="stylesheet" href="app-colors.css">
 </head>
 <body>
-  <main id="screen">
+  <main id="screen" hidden>
     <header>
       <div class="status">
-        <span id="network">Проверка сети</span><span class="divider"></span><span id="date"></span>
+        <span id="network">Проверка сети</span><span class="divider"></span><span id="date"></span><button id="settings-open" type="button" data-item="settings" aria-label="Настройки"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M9.5 3h5l.7 2.4 2.1 1.2 2.4-.6 2.5 4.3-1.7 1.8v2.4l1.7 1.8-2.5 4.3-2.4-.6-2.1 1.2-.7 2.4h-5l-.7-2.4-2.1-1.2-2.4.6-2.5-4.3 1.7-1.8v-2.4l-1.7-1.8 2.5-4.3 2.4.6 2.1-1.2z" transform="translate(0 -1.5) scale(1 .92)"/><circle cx="12" cy="11" r="3.3"/></svg></button>
       </div>
     </header>
     <section class="hero">
@@ -25,7 +25,7 @@
         </div>
       </div>
       <div class="widgets">
-        <div class="clock-widget" id="clock-widget"><button id="clock" type="button" data-item="screensaver" aria-label="Запустить заставку" title="Запустить заставку">00:00</button><div class="widget-label">Минск · UTC+3</div><button id="settings-open" type="button" data-item="settings" aria-label="Настройки"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M9.5 3h5l.7 2.4 2.1 1.2 2.4-.6 2.5 4.3-1.7 1.8v2.4l1.7 1.8-2.5 4.3-2.4-.6-2.1 1.2-.7 2.4h-5l-.7-2.4-2.1-1.2-2.4.6-2.5-4.3 1.7-1.8v-2.4l-1.7-1.8 2.5-4.3 2.4.6 2.1-1.2z" transform="translate(0 -1.5) scale(1 .92)"/><circle cx="12" cy="11" r="3.3"/></svg></button></div>
+        <div class="clock-widget" id="clock-widget"><button id="clock" type="button" data-item="screensaver" aria-label="Запустить заставку" title="Запустить заставку">00:00</button></div>
       </div>
     </section>
     <section class="apps-section">
@@ -63,25 +63,33 @@
         </div>
       </div>
       <p id="playlist-folder-message" role="status" hidden></p>
-      <form id="playlist-form" hidden>
+      <form id="playlist-form" hidden aria-labelledby="playlist-dialog-title">
+        <h3 id="playlist-dialog-title">Добавить плейлист</h3>
         <label for="playlist-name">Название плейлиста</label>
         <input id="playlist-name" type="text" maxlength="80" placeholder="Мой плейлист">
         <label for="playlist-input">Ссылка или содержимое M3U</label>
         <textarea id="playlist-input" rows="5" placeholder="https://example.com/playlist.m3u или #EXTM3U"></textarea>
         <p id="playlist-message" role="status"></p>
-        <button class="text-action" id="playlist-submit" type="submit">Добавить</button>
-        <button class="text-action" id="playlist-cancel" type="button">Отмена</button>
+        <div class="playlist-dialog-buttons"><button id="playlist-submit" type="submit">Добавить</button>
+        <button id="playlist-cancel" type="button">Отмена</button></div>
       </form>
       <div id="playlist-delete-form" hidden>
         <p id="playlist-delete-label"></p>
         <button id="playlist-delete-confirm" class="text-action" type="button">Удалить</button>
         <button id="playlist-delete-cancel" class="text-action" type="button">Отмена</button>
       </div>
+      <aside id="channel-preview-panel" hidden><button id="channel-preview-close" type="button" aria-label="Закрыть предпросмотр канала">×</button><div id="channel-preview-slot"></div><button id="channel-preview-expand" type="button">Открыть на весь экран</button><h3 id="channel-preview-title"></h3><p id="channel-preview-info"></p></aside>
       <div id="library-body"><div id="library-grid"></div></div>
     </section>
     <section id="settings" hidden aria-labelledby="settings-title">
       <h2 id="settings-title">Настройки</h2>
+      <p id="user-data-status" role="status" hidden></p>
       <h3>Скринсейверы</h3>
+      <div id="screensaver-options">
+        <label>Качество<select id="screensaver-quality"><option value="4k">4K</option><option value="1080p">1080p</option></select></label>
+        <label>Включать через<select id="screensaver-idle"><option value="30000">30 секунд</option><option value="60000">1 минуту</option><option value="120000">2 минуты</option><option value="300000">5 минут</option><option value="600000">10 минут</option></select></label>
+        <label>Менять через<select id="screensaver-rotation"><option value="60000">1 минуту</option><option value="120000">2 минуты</option><option value="300000">5 минут</option><option value="600000">10 минут</option><option value="900000">15 минут</option></select></label>
+      </div>
       <p id="aerial-selection-status" aria-live="polite"></p>
       <div id="aerial-settings-tabs" role="tablist" aria-label="Заставки">
         <button id="aerial-tab-favorites" class="playlist-tab" role="tab" aria-selected="true" aria-controls="aerial-settings-grid" type="button">Избранное</button>
@@ -124,28 +132,7 @@
   <script src="storage.js"></script>
   <script src="config.js"></script>
   <script src="platform.js"></script>
-  <script src="boot.js"></script>
-  <script src="channel-logos.js"></script>
-  <script src="channel-images.js"></script>
-  <script src="channel-health.js"></script>
-  <script src="order.js"></script>
-  <script src="remote.js"></script>
-  <script src="playlist-parser.js"></script>
-  <script src="iptv.js"></script>
-  <script src="favorites.js"></script>
-  <script src="playlist-store.js"></script>
-  <script src="playlists.js"></script>
-  <script src="library.js"></script>
-  <script src="tiles.js"></script>
-  <script src="apps.js"></script>
-  <script src="widgets.js"></script>
-  <script src="aerial-assets.js"></script>
-  <script src="aerial-catalog.js"></script>
-  <script src="aerial-favorites.js"></script>
-  <script src="idle.js"></script>
-  <script src="screensaver.js"></script>
-  <script src="aerial-preview.js"></script>
-  <script src="settings.js"></script>
-  <script src="main.js"></script>
+  <script src="user-data.js"></script>
+  <script src="startup.js"></script>
 </body>
 </html>

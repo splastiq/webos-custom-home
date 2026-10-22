@@ -27,6 +27,12 @@
   }
   window.TV = {
     available: typeof window.PalmServiceBridge === 'function',
+    userData: function (args, done) {
+      if (!/^(read [0-9]+|write [a-z0-9]+ [0-9]+ [A-Za-z0-9+/=]+|commit [a-z0-9]+)$/.test(args)) { done('invalid'); return; }
+      request('luna://org.webosbrew.hbchannel.service/exec',{command:'/usr/bin/node /media/developer/apps/usr/palm/applications/com.custom.webos.home/user-data-store.js '+args},function(error,response){
+        var result;try{result=JSON.parse(response.stdoutString);}catch(e){error='invalid';}done(error || result && result.error,result);
+      });
+    },
     launch: function (id, done) { request('luna://com.webos.applicationManager/launch', { id: id }, done); },
     prepareAerialPreview: function (done) {
       request('luna://org.webosbrew.hbchannel.service/exec', {
@@ -60,8 +66,8 @@
         done(files);
       });
     },
-    resolveChannelLogo: function (id, name, done) {
-      var input = window.btoa(unescape(encodeURIComponent(JSON.stringify({id:String(id || '').slice(0,200),name:String(name || '').slice(0,200)}))));
+    resolveChannelLogo: function (id, name, done, originalOnly) {
+      var input = window.btoa(unescape(encodeURIComponent(JSON.stringify({id:String(id || '').slice(0,200),name:String(name || '').slice(0,200),originalOnly:!!originalOnly}))));
       request('luna://org.webosbrew.hbchannel.service/exec', {
         command: '/usr/bin/node /media/developer/apps/usr/palm/applications/com.custom.webos.home/resolve-channel-logo.js ' + input
       }, function (error, response) {

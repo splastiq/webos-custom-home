@@ -35,6 +35,7 @@
     return null;
   }
   function filterChannels() {
+    if(window.IPTV && window.IPTV.isPreview && window.IPTV.isPreview()){window.IPTV.closePreview();}
     if (kind !== 'channels') { return; }
     var items = el('library-grid').querySelectorAll('button');
     for (var i = 0; i < items.length; i++) { items[i].hidden = !window.HomePlaylists.matches(items[i]); }
@@ -111,6 +112,7 @@
     }
   }
   function close() {
+    if(window.IPTV.isPreview()){window.IPTV.closePreview();}
     opened = false; requestId++; window.HomePlaylists.close(); el('library').hidden = true;
     backgrounds.forEach(function (node) { node.removeAttribute('aria-hidden'); });
     if (returnTo && document.documentElement.contains(returnTo)) { returnTo.focus(); }
@@ -165,12 +167,19 @@
         if (button && !button.disabled && !(event.relatedTarget && button.contains(event.relatedTarget))) { button.focus(); }
       });
       el('library-grid').addEventListener('click', function (event) {
-        var button = gridTarget(event); if (button && !button.disabled) { activate(button); }
+        var button = gridTarget(event); if (button && !button.disabled) { if(kind==='channels'){window.IPTV.preview(Number(button.getAttribute('data-channel')),window.HomePlaylists.selectedId());invalidate();}else{activate(button);} }
       });
       el('library-close').addEventListener('click', close);
       document.addEventListener('keydown', function (event) {
-        if (!opened || window.IPTV.isOpen()) { return; }
+        if (!opened || window.IPTV.isOpen() && !window.IPTV.isPreview()) { return; }
         var key = event.keyCode;
+        if(window.IPTV.isPreview() && (key===27||key===461)){event.preventDefault();event.stopImmediatePropagation();window.IPTV.closePreview();invalidate();focus(focused);return;}
+        if(el('channel-preview-panel').contains(event.target)){
+          if(key===13||key===32){event.preventDefault();event.stopImmediatePropagation();event.target.click();}
+          else if(key===37){event.preventDefault();event.stopImmediatePropagation();focus(focused);}
+          return;
+        }
+        if(window.IPTV.isPreview() && key===39 && focused%4===3){event.preventDefault();event.stopImmediatePropagation();el('channel-preview-expand').focus();return;}
         var formOpen = !el('playlist-form').hidden || !el('playlist-delete-form').hidden;
         if (kind === 'channels' && formOpen) {
           if (key === 27 || key === 461) { event.preventDefault(); event.stopImmediatePropagation(); window.HomePlaylists.close(); el('playlist-add').focus(); }
@@ -217,7 +226,7 @@
         if ([27, 461, 37, 38, 39, 40, 9, 13, 32].indexOf(key) === -1) { return; }
         event.preventDefault(); event.stopImmediatePropagation();
         if (key === 27 || key === 461) { close(); return; }
-        if (key === 13 || key === 32) { if (onBack) { close(); } else if (list[focused]) { activate(list[focused]); } return; }
+        if (key === 13 || key === 32) { if (onBack) { close(); } else if (list[focused]) { if(kind==='channels'){window.IPTV.preview(Number(list[focused].getAttribute('data-channel')),window.HomePlaylists.selectedId());invalidate();}else{activate(list[focused]);} } return; }
         if (key === 9) {
           if (onBack) { focus(event.shiftKey ? list.length - 1 : 0); }
           else if ((!event.shiftKey && focused === list.length - 1) || (event.shiftKey && focused === 0)) { el('library-close').focus(); }

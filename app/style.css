@@ -1241,3 +1241,39 @@ h1 {
 #player-status { color: rgba(255,255,255,.8); }
 #playlist-tools { position: relative; padding-top: 42px; }
 .playlist-actions { position: absolute; top: 0; right: 0; }
+/* Home header and controls. */
+#clock-widget { padding-right: 0; }
+#clock { font-size: 104px; }
+.status { display: flex; align-items: center; }
+#settings-open { position: static; margin-left: 24px; padding: 0; }
+#network.offline:before { background: #f05d65; box-shadow: none; }
+/* Keep pending logos neutral instead of showing letter blocks. */
+.channel-mark { font-size: 0; background: none; }
+/* Playlist dialog. */
+#playlist-form { background: #192131; border: 1px solid rgba(255,255,255,.12); border-radius: 22px; box-shadow: 0 24px 70px rgba(0,0,0,.45); padding: 32px; color: #f5f6fa; }
+#playlist-dialog-title { font-size: 30px; margin: 0 0 24px; }
+#playlist-form input,#playlist-form textarea { box-sizing: border-box; background: #101725; color: #f5f6fa; border: 1px solid #45516a; border-radius: 10px; padding: 14px; }
+#playlist-form input:focus,#playlist-form textarea:focus { border-color: #99b7e8; outline: none; }
+.playlist-dialog-buttons { display: flex; justify-content: flex-end; margin-top: 22px; }
+#playlist-form .playlist-dialog-buttons button { border: 1px solid #526079; border-radius: 10px; background: #2b364b; color: #fff; padding: 12px 26px; margin-left: 16px; font: inherit; }
+#playlist-form #playlist-submit { background: #d9e7ff; color: #142039; border-color: #d9e7ff; }
+/* Native video stays outside the transformed UI, like the Aerial preview. */
+#channel-preview-panel { position: absolute; top: 280px; right: 95px; width: 720px; }
+#channel-preview-slot { width: 720px; height: 405px; background: #000; border-radius: 12px; }
+#channel-preview-title { font-size: 28px; margin: 20px 0 12px; }
+#channel-preview-info { font-size: 18px; color: #a6b2c8; overflow-wrap: break-word; }
+#channel-preview-close { position: absolute; right: 0; top: -44px; background: none; border: 0; color: #a6b2c8; font-size: 32px; }
+#channel-preview-expand { border: 0; background: none; color: #a6b2c8; padding: 12px 0; font: inherit; }
+#library.channel-preview-open #library-body { width: 840px; }
+#library.channel-preview-open #library-grid .channel-tile { width: 190px; margin-right: 12px; }
+#tv-player.channel-preview { z-index: 21; cursor: pointer; border-radius: 10px; overflow: hidden; }
+#tv-player.channel-preview #player-close,#tv-player.channel-preview #player-channel-name { display: none; }
+#tv-player.channel-preview #player-status { font-size: 15px; bottom: 8px; padding: 8px; }
+#screensaver-options { display: flex; margin: 14px 0; }
+#screensaver-options label { color: #a6b2c8; font-size: 18px; margin-right: 28px; }
+#screensaver-options select { display: block; margin-top: 8px; background: #202b3e; color: #fff; border: 1px solid #485770; border-radius: 8px; font: inherit; padding: 8px 12px; }
+#settings #aerial-settings-body { height: 495px; }
+#aerial-settings-empty { top: 445px; }
+#aerial-preview-panel { top: 415px; }
+
+#user-data-status { font-size: 16px; color: #f4a6a6; margin: 8px 0; }

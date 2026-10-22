@@ -80,7 +80,7 @@
     return window.TV.available || !!video.canPlayType('video/mp4; codecs="hvc1.1.6.L123.B0"') || !!video.canPlayType('video/mp4; codecs="hev1.1.6.L123.B0"');
   }
   function availableSources(item) {
-    return window.HomeAerialCatalog.variants(item, hevc()).filter(function (url) { return !failedSources[item.id + '|' + url]; });
+    return window.HomeAerialCatalog.variants(item, hevc()).filter(function (url) { return (config.quality !== '1080p' || !item.sources || url !== item.sources.hevc4k) && !failedSources[item.id + '|' + url]; });
   }
   function refill() {
     var assets = catalog.assets();
@@ -203,6 +203,7 @@
   }
   window.HomeScreensaver = {
     assets: function () { return catalog ? catalog.assets() : []; },
+    optionsChanged: function () { rotationMs=config.rotationMs; if(idle){idle.setDelay(config.idleMs);}clearPreload();queue=[];sources=[]; },
     selectionChanged: function () { clearPreload(); queue = []; sources = []; },
     isActive: function () { return !!idle && idle.isActive(); },
     start: function (key) {

@@ -4,7 +4,7 @@ Native HTML/CSS/ES5 home screen for LG 49SJ810V, webOS 3.5 (06.10.65), Chromium 
 
 Commands: npm start; npm run check; npm test; npm run package.
 
-## Current build: 0.6.7
+## Current build: 0.7.0
 
 TV folder playlists: scan-playlists.js reads only /var/lib/webosbrew/custom-home/playlists through the existing Homebrew exec bridge. Each M3U/M3U8 creates a stable filename-based tab; startup, channel-page opening and the TV-only refresh button trigger scans, never during IPTV. playlist-store.syncFolder preserves manual documents and valid cached content on read/parse/quota errors. Complete snapshots prune deleted files; removing an imported tab hides it until its file changes. Limits: 32 files, 1 MiB each, 2 MiB total; no symlinks. tools/tv-upload-playlist.js uses the configured LG CLI SSH session, validates SHA256 and performs an atomic upload with hidden backups. Never commit private playlist contents. The user's private file was uploaded separately; build 0.6.5 installed and launched. Folder/store regression tests and full checks passed.
 
@@ -30,7 +30,7 @@ Early TV CoverUI displays Home / Loading independently of application splash set
 
 Preserve existing localStorage keys and ordering by stable app key / channel URL. Custom M3U documents, optional source URLs and snapshots live in home.playlists.v1. Original Belarus playlist has its own tab after Favorites. All channels includes SD; only initial HD channels seed home favorites. Removing a playlist never revives it during background updates. CORS failures mean unknown health, not a broken channel.
 
-Settings are still localStorage; uninstall/data clearing may remove them. No external-file settings service is implemented. USB hotplug and physical remote edge cases still need device checks as changes are made. TV and desktop storage are separate.
+Rooted TV settings are mirrored outside the application and restored before UI modules load (see 0.7.0 below). Desktop settings remain localStorage. USB hotplug and physical remote edge cases still need device checks as changes are made. TV and desktop storage are separate.
 
 Configure TV access/authentication separately on another computer. Never commit passwords, keys or personal TV settings. LG CLI device alias on this computer is tv. Application ID: com.custom.webos.home.
 
@@ -73,3 +73,16 @@ channel-images triggers TV.resolveChannelLogo only for visible favorites after o
 0.6.6: tv-logos lacks 1HD Music Television. Bundled original SVG from https://www.1hd.ru/img/logo.svg with explicit HD/SD ID mapping; static vector paths, no external images or scripts.
 
 0.6.7: IPTV opening/channel switching shows channel title and Back together for 2.2 seconds; mouse movement reveals both. White text uses Aerial-like 80% alpha. Favorite toggle success messages removed; failure messages remain. Playlist action group is right-aligned above tabs. Bundled PNG artwork for BRIDGE Deluxe, Muzyka Pervogo, Nauka, Russia1, RUTV, TravelPlusAdventure, TV3 from https://epg.iptvx.one/picons/ (bridge-hd, muzyka-pervogo, nauka, rossia1, ru-tv, travel-adventure, tv3-ru). Hit and SONGTVRussia originals from public iptv-org logo metadata (Imgur jl3MNPe and nM7LbmV) saved locally to bypass TV browser requests. CHANNEL_LOGOS supports base channel IDs for all feeds. SVG 1HD remains unchanged. Full checks/tests passed.
+
+## 0.7.0
+Startup statically loads storage/config/platform/user-data/startup, restores all Home-owned raw localStorage values from /var/lib/webosbrew/custom-home/settings.json, then loads stateful modules sequentially. user-data-store.js fixed-directory read/write/commit uses 8192-character base64 chunks, atomic rename and size/offset/token/key checks. Async debounced snapshots migrate old localStorage on first launch. TV verified 382291-byte external file containing aerial favorites, favorites, IPTV snapshot, app/channel order, playlists and weather. Empty-browser-storage restoration is tested. No uninstall was performed.
+
+Channel preview reuses the native IPTV decoder outside transformed screen, aligned to library slot. Four grid columns; playlist name/group/height/ID under video. Expand preserves src. Back/close/tab changes release playback; P keys retain preview scope. Browser verified layout, expand and Back. Physical TV preview needs user verification.
+
+preferences.js validates home.screensaver.options.v1 before screensaver initialization. Quality/idle/rotation selects apply live through HomeIdle.setDelay and screensaver.optionsChanged. 1080p excludes 4K ambient sources; Aerial settings previews stay 1080p.
+
+Resolver also caches original favorite PNGs from six fixed public host families, deriving URLs from TV folder playlists using ID/name. Bounded size/dimensions, bundled CA, persistent cache/index; serial background requests for visible favorites. TV cache verified at 20 PNGs.
+
+Clock caption removed, clock slightly larger, gear after date. PS4 HDMI2, Mobile HDMI1. Offline network dot red. Playlist dialog title, dark fields, right-aligned solid buttons.
+
+Persistence follow-up: after initial migration, dirty-key updates merge atomically into the external file instead of rewriting large playlists for every favorite toggle. Failed restore disables external writes for the session and shows a settings warning. Startup stays black until UI initialization completes. Up from Aerial tabs reaches the options; Left/Right changes focused select, Back returns to tabs.

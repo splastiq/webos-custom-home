@@ -28,6 +28,7 @@
     }
     function stop() { if (active) { active = false; options.stop(); } }
     return {
+      setDelay: function (value) { options.delay=value;cancelPrepare();lastInput=options.now();schedule(); },
       reset: function () { var consumed = active; stop(); cancelPrepare(); lastInput = options.now(); schedule(); return consumed; },
       activity: function () { var consumed = active; stop(); var wasPrepared = prepared; cancelPrepare(); lastInput = options.now(); if (!timer || consumed || wasPrepared) { schedule(); } return consumed; },
       suspend: function () { suspended = true; clear(); stop(); cancelPrepare(); },

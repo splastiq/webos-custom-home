@@ -24,6 +24,14 @@
       resolving = false; replacements[key] = file; schedule();
     });
   }
+  function cacheOriginal(image) {
+    if (resolving || !window.TV || !window.TV.available || !window.TV.resolveChannelLogo || !favorite(image) || image._logoCacheQueued) { return; }
+    var source=image.getAttribute('data-logo-src') || '';
+    if (!/^https:\/\//.test(source)) { return; }
+    image._logoCacheQueued=true;resolving=true;
+    var id=image.getAttribute('data-logo-id') || '',name=image.getAttribute('data-logo-name') || '',key=id+'|'+name;
+    window.TV.resolveChannelLogo(id,name,function(file){resolving=false;if(file){cached[key]=file;replacements[key]=file;}schedule();},true);
+  }
   function schedule() {
     if (timer !== null) { return; }
     timer = setTimeout(function () { timer = null; scan(); }, 100);
@@ -66,6 +74,7 @@
         image._logoCacheChecked=true;
         if (/^runtime-channel-logos\/[a-f0-9]{64}\.png$/.test(cached[key] || '')) { image.setAttribute('data-logo-src',cached[key]); }
       }
+      if (cacheReady && (image._logoAttempts || 0) < 3 && visible(image)) { cacheOriginal(image); }
       if (image.getAttribute('data-logo-loaded') !== 'true' && !image._logoResolved &&
           ((image._logoAttempts || 0) >= 3 || !image.getAttribute('data-logo-src')) && visible(image)) { fallback(image); }
       if (image.getAttribute('data-logo-src') && !image._logoLoading && image.getAttribute('data-logo-loaded') !== 'true' &&

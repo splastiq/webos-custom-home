@@ -134,6 +134,11 @@
       render(); focus(0);
     },
     init: function () {
+      var options=window.HOME_CONFIG.screensaver;
+      [['quality','quality'],['idle','idleMs'],['rotation','rotationMs']].forEach(function(pair){
+        var select=el('screensaver-'+pair[0]);select.value=String(options[pair[1]]);
+        select.addEventListener('change',function(){options[pair[1]]=pair[0]==='quality'?select.value:Number(select.value);window.HomePreferences.save();window.HomeScreensaver.optionsChanged();});
+      });
       window.HomeAerialPreview.init(el('aerial-preview-video'), el('aerial-preview-status'), el('aerial-preview-slot'), el('aerial-preview-surface'), el('aerial-preview-cover'));
       el('aerial-preview-close').addEventListener('click', closePreview);
       el('settings-close').addEventListener('click', close);
@@ -144,13 +149,20 @@
       el('aerial-settings-body').addEventListener('scroll', function () { clearTimeout(previewTimer); previewTimer = setTimeout(loadPreviews, 80); });
       document.addEventListener('keydown', function (event) {
         if (!opened) { return; }
-        var key = event.keyCode; var card = target(event);
+        var key = event.keyCode;
+        if (event.target.tagName === 'SELECT') {
+          if(key===27||key===461){event.preventDefault();event.stopImmediatePropagation();selectedTab().focus();}
+          else if(key===37||key===39){event.preventDefault();event.stopImmediatePropagation();var controls=el('screensaver-options').querySelectorAll('select');var at=Array.prototype.indexOf.call(controls,event.target);controls[Math.max(0,Math.min(controls.length-1,at+(key===37?-1:1)))].focus();}
+          return;
+        }
+        var card = target(event);
         if ([27,461,37,38,39,40,13,32,403,82,9,33,34].indexOf(key) === -1) { return; }
         event.preventDefault(); event.stopImmediatePropagation();
         if (key === 27 || key === 461) { if (previewAsset) { closePreview(); } else { close(); } return; }
         var onTab = event.target === el('aerial-tab-favorites') || event.target === el('aerial-tab-all');
         if (onTab) {
-          if (key === 37) { selectTab('favorites'); }
+          if (key === 38) { el('screensaver-quality').focus(); }
+          else if (key === 37) { selectTab('favorites'); }
           else if (key === 39) { selectTab('all'); }
           else if (key === 40 || key === 13 || key === 32 || key === 9 && !event.shiftKey) { focus(0); }
           else if (key === 9 && event.shiftKey) { el('settings-close').focus(); }
