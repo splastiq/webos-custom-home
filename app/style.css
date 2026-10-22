@@ -1277,3 +1277,30 @@ h1 {
 #aerial-preview-panel { top: 415px; }
 
 #user-data-status { font-size: 16px; color: #f4a6a6; margin: 8px 0; }
+/* Stable row geometry: opening preview never changes channel positions. */
+#library.has-playlists #library-body { width: 840px; }
+#library.has-playlists #library-grid .channel-tile { width: 190px; margin-right: 12px; }
+#library-body,#aerial-settings-body { scroll-behavior: auto; }
+#tv-player.channel-preview { background: transparent; overflow: visible; border-radius: 0; }
+#channel-preview-slot { background: transparent; border-radius: 0; }
+#tv-player.channel-preview #tv-video { border-radius: 0; }
+#channel-preview-expand,#channel-preview-close { display: none; }
+#tv-player.channel-preview #channel-preview-expand { display: block; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border: 0; background: transparent; z-index: 2; cursor: pointer; }
+#tv-player.channel-preview #channel-preview-close,#aerial-preview-close { display: block; position: absolute; z-index: 3; top: 12px; right: 14px; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; color: #bbc1cc; background: rgba(0,0,0,.6); font: 42px/52px Arial,sans-serif; outline: none; }
+#channel-preview-close:hover,#channel-preview-close:focus,#aerial-preview-close:hover,#aerial-preview-close:focus { color: #fff; background: rgba(255,255,255,.18); }
+#playlist-form { left: 50%; right: auto; width: 700px; margin-left: -350px; }
+#playlist-form .playlist-dialog-buttons button { margin-right: 0; font-weight: 700; }
+#screensaver-options[hidden],#screensaver-catalog[hidden],#screensaver-options select[hidden] { display: none !important; }
+#screensaver-choose { display: block; margin-top: 30px; font-size: 22px; }
+#screensaver-choose[hidden] { display: none; }
+#settings.catalog-page #aerial-settings-body { height: 620px; }
+#settings.catalog-page #aerial-preview-panel { top: 235px; }
+#settings.catalog-page #aerial-settings-empty { top: 265px; }
+.custom-dropdown { display: block; position: relative; margin-top: 12px; min-width: 220px; }
+.dropdown-trigger { display: block; width: 100%; padding: 14px 40px 14px 18px; border: 1px solid #485770; border-radius: 12px; color: #f5f6fa; background: #202b3e; text-align: left; font: inherit; }
+.dropdown-trigger:after { content: '⌄'; position: absolute; right: 18px; }
+.dropdown-trigger:focus { border-color: #aabbd8; outline: none; }
+.dropdown-list { position: absolute; top: 100%; left: 0; right: 0; margin-top: 10px; padding: 8px; border: 1px solid #46536a; border-radius: 16px; background: #1b2435; box-shadow: 0 12px 32px rgba(0,0,0,.4); z-index: 40; }
+.dropdown-list[hidden] { display: none; }
+.dropdown-list button { display: block; width: 100%; margin: 4px 0; padding: 14px 12px; border: 0; border-radius: 10px; background: transparent; color: #c0cadd; text-align: left; font: inherit; }
+.dropdown-list button[aria-selected="true"],.dropdown-list button:focus,.dropdown-list button:hover { background: rgba(255,255,255,.12); color: #fff; outline: none; }

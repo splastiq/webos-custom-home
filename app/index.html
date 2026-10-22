@@ -78,18 +78,20 @@
         <button id="playlist-delete-confirm" class="text-action" type="button">Удалить</button>
         <button id="playlist-delete-cancel" class="text-action" type="button">Отмена</button>
       </div>
-      <aside id="channel-preview-panel" hidden><button id="channel-preview-close" type="button" aria-label="Закрыть предпросмотр канала">×</button><div id="channel-preview-slot"></div><button id="channel-preview-expand" type="button">Открыть на весь экран</button><h3 id="channel-preview-title"></h3><p id="channel-preview-info"></p></aside>
+      <aside id="channel-preview-panel" hidden><div id="channel-preview-slot"></div><h3 id="channel-preview-title"></h3><p id="channel-preview-info"></p></aside>
       <div id="library-body"><div id="library-grid"></div></div>
     </section>
     <section id="settings" hidden aria-labelledby="settings-title">
       <h2 id="settings-title">Настройки</h2>
       <p id="user-data-status" role="status" hidden></p>
-      <h3>Скринсейверы</h3>
+      <h3 id="screensaver-section-heading">Скринсейвер</h3>
       <div id="screensaver-options">
         <label>Качество<select id="screensaver-quality"><option value="4k">4K</option><option value="1080p">1080p</option></select></label>
         <label>Включать через<select id="screensaver-idle"><option value="30000">30 секунд</option><option value="60000">1 минуту</option><option value="120000">2 минуты</option><option value="300000">5 минут</option><option value="600000">10 минут</option></select></label>
         <label>Менять через<select id="screensaver-rotation"><option value="60000">1 минуту</option><option value="120000">2 минуты</option><option value="300000">5 минут</option><option value="600000">10 минут</option><option value="900000">15 минут</option></select></label>
       </div>
+      <button id="screensaver-choose" class="text-action" type="button">Выбор скринсейвера →</button>
+      <section id="screensaver-catalog" hidden aria-label="Выбор скринсейвера">
       <p id="aerial-selection-status" aria-live="polite"></p>
       <div id="aerial-settings-tabs" role="tablist" aria-label="Заставки">
         <button id="aerial-tab-favorites" class="playlist-tab" role="tab" aria-selected="true" aria-controls="aerial-settings-grid" type="button">Избранное</button>
@@ -106,6 +108,7 @@
         </div>
       </aside>
       <p id="aerial-settings-error" role="status"></p>
+      </section>
       <button id="settings-close" class="text-action" type="button">← Назад</button>
     </section>
   </main>
@@ -117,6 +120,8 @@
   </div>
   <section id="tv-player" hidden aria-label="IPTV-плеер" tabindex="-1">
     <video id="tv-video" preload="auto" playsinline></video>
+    <button id="channel-preview-expand" type="button" aria-label="На весь экран"></button>
+    <button id="channel-preview-close" type="button" aria-label="Закрыть предпросмотр канала">×</button>
     <div id="player-channel-name"></div>
     <button id="player-close" aria-label="Назад к каналам" tabindex="-1">← Назад</button>
     <p id="player-status" role="status" aria-live="polite" hidden></p>

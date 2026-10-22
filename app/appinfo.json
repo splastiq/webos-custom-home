@@ -1,6 +1,6 @@
 {
   "id": "com.custom.webos.home",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "vendor": "Custom Home",
   "type": "web",
   "main": "index.html",

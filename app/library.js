@@ -48,7 +48,7 @@
     var list = buttons();
     focused = Math.max(0, Math.min(list.length - 1, index));
     highlight(list[focused]);
-    if (list[focused]) { list[focused].focus(); }
+    if (list[focused]) { window.HomeGridScroll(el('library-body'),el('library-grid'),list,focused); }
     else { el('library-close').focus(); }
   }
   function add(button, source) {
@@ -174,7 +174,7 @@
         if (!opened || window.IPTV.isOpen() && !window.IPTV.isPreview()) { return; }
         var key = event.keyCode;
         if(window.IPTV.isPreview() && (key===27||key===461)){event.preventDefault();event.stopImmediatePropagation();window.IPTV.closePreview();invalidate();focus(focused);return;}
-        if(el('channel-preview-panel').contains(event.target)){
+        if(el('channel-preview-panel').contains(event.target)||event.target.id==='channel-preview-close'||event.target.id==='channel-preview-expand'){
           if(key===13||key===32){event.preventDefault();event.stopImmediatePropagation();event.target.click();}
           else if(key===37){event.preventDefault();event.stopImmediatePropagation();focus(focused);}
           return;

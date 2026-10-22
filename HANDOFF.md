@@ -4,7 +4,7 @@ Native HTML/CSS/ES5 home screen for LG 49SJ810V, webOS 3.5 (06.10.65), Chromium 
 
 Commands: npm start; npm run check; npm test; npm run package.
 
-## Current build: 0.7.0
+## Current build: 0.7.1
 
 TV folder playlists: scan-playlists.js reads only /var/lib/webosbrew/custom-home/playlists through the existing Homebrew exec bridge. Each M3U/M3U8 creates a stable filename-based tab; startup, channel-page opening and the TV-only refresh button trigger scans, never during IPTV. playlist-store.syncFolder preserves manual documents and valid cached content on read/parse/quota errors. Complete snapshots prune deleted files; removing an imported tab hides it until its file changes. Limits: 32 files, 1 MiB each, 2 MiB total; no symlinks. tools/tv-upload-playlist.js uses the configured LG CLI SSH session, validates SHA256 and performs an atomic upload with hidden backups. Never commit private playlist contents. The user's private file was uploaded separately; build 0.6.5 installed and launched. Folder/store regression tests and full checks passed.
 
@@ -86,3 +86,12 @@ Resolver also caches original favorite PNGs from six fixed public host families,
 Clock caption removed, clock slightly larger, gear after date. PS4 HDMI2, Mobile HDMI1. Offline network dot red. Playlist dialog title, dark fields, right-aligned solid buttons.
 
 Persistence follow-up: after initial migration, dirty-key updates merge atomically into the external file instead of rewriting large playlists for every favorite toggle. Failed restore disables external writes for the session and shows a settings warning. Startup stays black until UI initialization completes. Up from Aerial tabs reaches the options; Left/Right changes focused select, Back returns to tabs.
+
+## 0.7.1
+User reported black small IPTV preview while fullscreen plays. Preview surface clipping and rounded corners were removed; native video now has explicit pixel CSS sizes and width/height attributes. Surface transparency avoids an opaque composited ancestor. User confirmed moving video is visible in the small preview on the physical TV with version 0.7.1. Close/fullscreen reset these geometry overrides. Close moved onto video, shares enlarged 56px Aerial close style; transparent accessible expand button covers video without visible caption.
+
+Channels always keep the same four-column grid, including before preview. Browser measured identical first-row rectangles before/after preview. grid-scroll.js prevents native focus from shifting horizontal/parent offsets and aligns overflow scrolling to row boundaries; used by libraries and Aerial selection, with regression tests.
+
+Settings options and screensaver catalog are separate logical pages. Options shows only quality/idle/rotation and Choose screensaver link. Catalog page owns tabs/cards/favorites/preview; Back returns to options. Visible Apple Aerial prefix removed. dropdowns.js replaces hidden native selects with styled button/listbox controls, keyboard selection, current-item highlights and outside/Back dismissal. Options retain existing persistence.
+
+Mobile HDMI1 now precedes PS4 HDMI2. Playlist form width 700px (was 1400), buttons right margin zero and bold. Aerial loading/buffering text is hidden while existing loader and error messages remain; preview tests now assert loader/cover state instead of using caption visibility as a proxy.

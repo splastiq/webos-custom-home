@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   var opened = false;
+  var catalogPage=false;
   var returnTo;
   var cards = [];
   var allCards = [];
@@ -13,7 +14,7 @@
   function el(id) { return document.getElementById(id); }
   function status() {
     var count = window.HomeAerialSelection.filter(window.HomeScreensaver.assets()).length;
-    el('aerial-selection-status').textContent = 'Apple Aerial · Показано: ' + cards.length + ' · В избранном: ' + count +
+    el('aerial-selection-status').textContent = 'Показано: ' + cards.length + ' · В избранном: ' + count +
       (count ? '' : ' · Выберите заставки. Пока показываются только часы.');
   }
   function selectedTab() { return el('aerial-tab-' + activeTab); }
@@ -40,7 +41,7 @@
   }
   function loadPreviews() {
     clearTimeout(previewTimer);
-    if (!opened) { return; }
+    if (!opened || !catalogPage) { return; }
     var bounds = el('aerial-settings-body').getBoundingClientRect();
     cards.forEach(function (card) {
       if (!card._preview) { return; }
@@ -54,10 +55,7 @@
   function focus(index) {
     focused = Math.max(0, Math.min(cards.length - 1, index));
     if (!cards[focused]) { selectedTab().focus(); return; }
-    cards[focused].focus();
-    var body = el('aerial-settings-body'); var card = cards[focused];
-    if (card.offsetTop < body.scrollTop) { body.scrollTop = card.offsetTop; }
-    else if (card.offsetTop + card.offsetHeight > body.scrollTop + body.clientHeight) { body.scrollTop = card.offsetTop + card.offsetHeight - body.clientHeight; }
+    window.HomeGridScroll(el('aerial-settings-body'),el('aerial-settings-grid'),cards,focused);
     loadPreviews();
   }
   function toggle(card) {
@@ -102,7 +100,18 @@
     el('aerial-preview-info').scrollTop = 0; window.IPTV.setAmbient(true);
     window.HomeAerialPreview.play(asset); focus(focused);
   }
+  function optionsPage() {
+    if(previewAsset){closePreview();}window.HomeDropdowns.close();catalogPage=false;
+    el('screensaver-catalog').hidden=true;el('screensaver-options').hidden=false;el('screensaver-choose').hidden=false;el('screensaver-section-heading').hidden=false;
+    el('settings-title').textContent='Настройки';el('settings').classList.remove('catalog-page');el('screensaver-choose').focus();
+  }
+  function choosePage() {
+    window.HomeDropdowns.close();catalogPage=true;el('screensaver-catalog').hidden=false;el('screensaver-options').hidden=true;el('screensaver-choose').hidden=true;el('screensaver-section-heading').hidden=true;
+    el('settings-title').textContent='Выбор скринсейвера';el('settings').classList.add('catalog-page');render();focus(0);
+  }
   function close() {
+    if(catalogPage){optionsPage();return;}
+    window.HomeDropdowns.close();
     if (previewAsset) { closePreview(); }
     opened = false; clearTimeout(previewTimer); el('settings').hidden = true;
     el('settings').parentNode.removeAttribute('data-settings-open');
@@ -131,7 +140,7 @@
         var place = document.createElement('span'); place.className = 'aerial-place'; place.textContent = asset.location || ''; card.appendChild(place);
         card._preview = asset.preview; allCards.push(card);
       });
-      render(); focus(0);
+      optionsPage();
     },
     init: function () {
       var options=window.HOME_CONFIG.screensaver;
@@ -139,6 +148,8 @@
         var select=el('screensaver-'+pair[0]);select.value=String(options[pair[1]]);
         select.addEventListener('change',function(){options[pair[1]]=pair[0]==='quality'?select.value:Number(select.value);window.HomePreferences.save();window.HomeScreensaver.optionsChanged();});
       });
+      window.HomeDropdowns.init(el('screensaver-options'));
+      el('screensaver-choose').addEventListener('click',choosePage);
       window.HomeAerialPreview.init(el('aerial-preview-video'), el('aerial-preview-status'), el('aerial-preview-slot'), el('aerial-preview-surface'), el('aerial-preview-cover'));
       el('aerial-preview-close').addEventListener('click', closePreview);
       el('settings-close').addEventListener('click', close);
@@ -150,6 +161,13 @@
       document.addEventListener('keydown', function (event) {
         if (!opened) { return; }
         var key = event.keyCode;
+        if(!catalogPage){
+          if([27,461,13,32,37,38,39,40,9].indexOf(key)<0){return;}
+          event.preventDefault();event.stopImmediatePropagation();
+          if(key===27||key===461){close();return;}
+          if(key===13||key===32){event.target.click();return;}
+          var controls=el('settings').querySelectorAll('.dropdown-trigger,#screensaver-choose,#settings-close');var at=Array.prototype.indexOf.call(controls,event.target);var step=(key===37||key===38||key===9&&event.shiftKey)?-1:1;controls[Math.max(0,Math.min(controls.length-1,at+step))].focus();return;
+        }
         if (event.target.tagName === 'SELECT') {
           if(key===27||key===461){event.preventDefault();event.stopImmediatePropagation();selectedTab().focus();}
           else if(key===37||key===39){event.preventDefault();event.stopImmediatePropagation();var controls=el('screensaver-options').querySelectorAll('select');var at=Array.prototype.indexOf.call(controls,event.target);controls[Math.max(0,Math.min(controls.length-1,at+(key===37?-1:1)))].focus();}
@@ -161,7 +179,7 @@
         if (key === 27 || key === 461) { if (previewAsset) { closePreview(); } else { close(); } return; }
         var onTab = event.target === el('aerial-tab-favorites') || event.target === el('aerial-tab-all');
         if (onTab) {
-          if (key === 38) { el('screensaver-quality').focus(); }
+          if (key === 38) { el('settings-close').focus(); }
           else if (key === 37) { selectTab('favorites'); }
           else if (key === 39) { selectTab('all'); }
           else if (key === 40 || key === 13 || key === 32 || key === 9 && !event.shiftKey) { focus(0); }

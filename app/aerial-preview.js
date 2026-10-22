@@ -101,7 +101,7 @@
     try { video.currentTime = target; firstTime = target; pendingSeek = false; } catch (ignored) {}
   }
   function status(text) {
-    note.textContent = text; note.hidden = !text;
+    note.textContent = text === 'Загрузка видео…' || text === 'Буферизация…' ? '' : text; note.hidden = !note.textContent;
     if (surface) {
       if (text === 'Загрузка видео…' || text === 'Буферизация…') { surface.classList.add('is-loading'); }
       else { surface.classList.remove('is-loading'); }

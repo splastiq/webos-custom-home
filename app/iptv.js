@@ -187,7 +187,7 @@
     });
   }
   function close() {
-    previewMode=false; el('tv-player').classList.remove('channel-preview');el('tv-player').removeAttribute('style');
+    previewMode=false; el('tv-player').classList.remove('channel-preview');el('tv-player').removeAttribute('style');el('tv-video').removeAttribute('style');el('tv-video').removeAttribute('width');el('tv-video').removeAttribute('height');
     el('channel-preview-panel').hidden=true;el('library').classList.remove('channel-preview-open');
     opened = false; generation++; clearTimeout(timeout); hideBack();
     status('');
@@ -237,7 +237,8 @@
     if (!previewMode) { return; }
     var box=el('channel-preview-slot').getBoundingClientRect(),surface=el('tv-player');
     surface.classList.add('channel-preview');
-    surface.style.left=box.left+'px';surface.style.top=box.top+'px';surface.style.width=box.width+'px';surface.style.height=box.height+'px';
+    surface.style.left=Math.round(box.left)+'px';surface.style.top=Math.round(box.top)+'px';surface.style.width=Math.round(box.width)+'px';surface.style.height=Math.round(box.height)+'px';
+    var media=el('tv-video');media.style.width=Math.round(box.width)+'px';media.style.height=Math.round(box.height)+'px';media.setAttribute('width',Math.round(box.width));media.setAttribute('height',Math.round(box.height));
   }
   function expand() {
     if(!previewMode){return;}previewMode=false;
